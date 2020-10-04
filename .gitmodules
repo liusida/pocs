@@ -1,0 +1,3 @@
+[submodule "PyBulletWrapper"]
+	path = PyBulletWrapper
+	url = https://github.com/liusida/PyBulletWrapper.git
