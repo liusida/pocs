@@ -34,11 +34,18 @@ while True:
             p.setJointMotorControl2(car,
                                 wheel,
                                 p.VELOCITY_CONTROL,
-                                targetVelocity=random.random() * 10,
+                                targetVelocity=random.random() * 100,
                                 force=random.random() * 5)
 
         for steer in steering:
             p.setJointMotorControl2(car, steer, p.POSITION_CONTROL, targetPosition=random.random()-0.2)
 
     p.stepSimulation()
+    pts = p.getContactPoints()
+    for pt in pts:
+        if pt[1]==0 or pt[2]==0: #contact with floor
+            continue
+        else:
+            print(pt)
+
     p.sleepPy(0.01)
