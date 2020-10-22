@@ -1,2 +1,3 @@
-# pybullet-demo
-For PoCs 300 Course Project
+# PoCS
+For PoCS 300 Course Project
+
