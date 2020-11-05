@@ -122,7 +122,7 @@ class Simulation(threading.Thread):
             action = g_policy.get_action(obs)
             obs = g_world.step(action)
             g_obs = obs
-            time.sleep(0.1)
+            time.sleep(0.01)
 
 
 # P5 interface
