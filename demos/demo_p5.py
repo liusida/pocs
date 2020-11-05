@@ -16,7 +16,7 @@ def setup():
     no_stroke()
     # bg = load_image("bg.jpg")
 
-    for v in range(10):
+    for v in range(100):
         vehicles_pos[v] = np.array([400., 0.])
         vehicles_orientation[v] = pi
 
