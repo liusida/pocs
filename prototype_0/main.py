@@ -6,6 +6,9 @@ from p5 import *  # pip install p5
 from numpy.lib.function_base import angle
 np.random.seed(0)
 
+def log(*args):
+    if False:
+        print(*args)
 
 class Vehicle:
     def __init__(self, world):
@@ -99,10 +102,10 @@ class Policy:
     def init_params(self):
         self.weights = np.random.random([self.dim_obs, self.dim_action]) * 2 - 1
         self.bias = np.random.random([self.dim_action]) * 2 - 1
-        print("weights")
-        print(self.weights)
-        print("bias")
-        print(self.bias)
+        log("weights")
+        log(self.weights)
+        log("bias")
+        log(self.bias)
 
     def get_action(self, obs):
         return np.dot(obs, self.weights) + self.bias
