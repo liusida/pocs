@@ -2,14 +2,12 @@ import time
 import threading
 import argparse
 import numpy as np
+np.random.seed(0)
 from p5 import *  # pip install p5
 
-from numpy.lib.function_base import angle
-np.random.seed(0)
-
-from policy import Policy
+from policy import Policy, Policy_Boids
 from utils import log
-from world import World, Vehicle
+from world import World
 
 class Simulation(threading.Thread):
     def run(self):
@@ -27,7 +25,7 @@ class Simulation(threading.Thread):
             g_metrics[0] = info["metrics"]
             # set g_obs for visualization
             g_obs = g_world.get_absolute_obs()
-            time.sleep(0.005)
+            time.sleep(0.01)
 
 
 # P5 interface
@@ -92,7 +90,8 @@ if __name__ == "__main__":
     g_metrics = [0.]
     g_last_step = 0
     print("Press Ctrl+C twice to quit...")
+    # Start Simulation Thread
     sim = Simulation()
     sim.start()
-    # after start simulation thread, start to draw using p5
+    # Start to draw using p5
     run()

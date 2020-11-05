@@ -12,6 +12,16 @@
             "cwd": "${fileDirname}",
             "console": "integratedTerminal",
             "justMyCode": false,
+        },
+        {
+            "name": "Prototype 0",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/prototype_0/main.py",
+            "cwd": "${workspaceFolder}/prototype_0",
+            "args": [ "-n=5" ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
         }
     ]
 }

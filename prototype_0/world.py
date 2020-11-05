@@ -4,7 +4,7 @@ class Vehicle:
     def __init__(self, world):
         self.world = world
         self.dim_obs = 3    # pos_x, pos_y, angle
-        self.dim_action = 2  # steering, acceleration
+        self.dim_action = 2  # steering, velocity_offset
         self.reset()
 
     def reset(self):
@@ -14,12 +14,12 @@ class Vehicle:
         self.velocity = 0   # [0 ~ infty)
 
     def step(self, action):
-        steering, acceleration = action
+        steering, velocity_offset = action
         steering = steering * 0.1
-        acceleration = acceleration * 10
+        velocity_offset = velocity_offset * 10
         self.angle += steering
         self.angle = self.angle % (2 * np.pi)
-        self.velocity = self.world.default_velocity + acceleration
+        self.velocity = self.world.default_velocity + velocity_offset
         if self.velocity < 0:
             self.velocity = 0
         # update position after updating angle and velocity, the vehicle can respond faster
@@ -33,6 +33,21 @@ class Vehicle:
         # Normalized observations (0,1)
         return [self.pos_x / self.world.width, self.pos_y / self.world.height, self.angle / 2 / np.pi]
 
+class Vehicle_direct_control(Vehicle):
+    def step(self, action):
+        angle, velocity_offset = action
+        angle = angle * 2 * np.pi
+        velocity_offset = velocity_offset * 10
+        self.angle = angle
+        self.velocity = self.world.default_velocity + velocity_offset
+        if self.velocity < 0:
+            self.velocity = 0
+        # update position after updating angle and velocity, the vehicle can respond faster
+        self.pos_x += np.sin(self.angle) * self.velocity * self.world.dt
+        self.pos_y += np.cos(self.angle) * self.velocity * self.world.dt
+
+        self.pos_x = self.pos_x % self.world.width
+        self.pos_y = self.pos_y % self.world.height
 
 class World:
     def __init__(self):
@@ -81,10 +96,11 @@ class World:
         for vehicle in self.vehicles:
             all_members.append(vehicle.get_obs())
         all_members = np.array(all_members)
+        # return all_members
         ret = []
         for i, vehicle in enumerate(self.vehicles):  # if change obs, this should change
             all_members_v = all_members - vehicle.get_obs()
-            all_members_v[:2, :] = (all_members_v[:2, :] + 0.5) % 1. - 0.5  # make screen continuous
+            all_members_v[:, :2] = (all_members_v[:, :2] + 0.5) % 1. - 0.5  # make screen continuous
             ret.append(all_members_v.flatten())
         return np.array(ret)
 
