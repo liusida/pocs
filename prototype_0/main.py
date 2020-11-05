@@ -1,5 +1,6 @@
 import time
 import threading
+import argparse
 import numpy as np
 from p5 import *  # pip install p5
 
@@ -69,6 +70,7 @@ class World:
     def step(self, action):
         for i, vehicle in enumerate(self.vehicles):
             vehicle.step(action[i])
+        self.calculate_metrics()
         return self.get_obs()
 
     def reset(self):
@@ -90,6 +92,10 @@ class World:
             ret.append(np.concatenate([vehicle.get_obs(), all_members]))
         return np.array(ret)
 
+    def calculate_metrics(self):
+        global g_metrics
+        g_metrics[0] = self.vehicles[0].pos_x / self.width # TODO: for demostration. Should be entropy or something.
+
 
 class Policy:
     def __init__(self, dim_obs=3, dim_action=2):
@@ -108,14 +114,16 @@ class Policy:
         log(self.bias)
 
     def get_action(self, obs):
-        return np.dot(obs, self.weights) + self.bias
+        s = np.dot(obs, self.weights) + self.bias
+        s /= len(obs) # Normalization
+        return s
 
 
 class Simulation(threading.Thread):
     def run(self):
-        global g_obs, g_world
+        global g_obs, g_world, args
         g_world = World()
-        g_world.init_vehicles(10)
+        g_world.init_vehicles(args.num_vehicles)
 
         g_policy = Policy(dim_obs=g_world.dim_obs, dim_action=g_world.dim_action)
 
@@ -137,11 +145,11 @@ def setup():
 def draw():
     hack_check_window_size()
     background(27, 73, 98)
+    text(f"Metrics: {g_metrics[0]:.03f}", 10, 10)
     all_vehicles = g_obs[0,3:]
     all_vehicles = all_vehicles.reshape([-1,3])
     for v in all_vehicles:
         draw_vehicle( *v )
-    # print(all_vehicles)
 
 def hack_check_window_size():
     """ I use tile in Linux, so window size changes after it opens. """
@@ -168,9 +176,15 @@ def draw_vehicle(pos_x, pos_y, angel):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--num-vehicles", type=int, default=10, help="Number of vehicles")
+    args = parser.parse_args()
     g_obs = None
     g_world = None
+    g_metrics = [0.]
+    print("Press Ctrl+C twice to quit...")
     sim = Simulation()
     sim.start()
     # after start simulation thread, start to draw using p5
     run()
+    
