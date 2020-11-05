@@ -48,6 +48,7 @@ class Vehicle:
 class World:
     def __init__(self):
         self.dt = 0.1       # delat time, step size
+        self.time_step = 0
         self.default_velocity = 100.0
 
         self.dim_obs = 0
@@ -68,6 +69,7 @@ class World:
         self.dim_action = v.dim_action
 
     def step(self, action):
+        self.time_step += 1
         for i, vehicle in enumerate(self.vehicles):
             vehicle.step(action[i])
         self.calculate_metrics()
@@ -145,11 +147,20 @@ def setup():
 def draw():
     hack_check_window_size()
     background(27, 73, 98)
-    text(f"Metrics: {g_metrics[0]:.03f}", 10, 10)
+    draw_info()
     all_vehicles = g_obs[0,3:]
     all_vehicles = all_vehicles.reshape([-1,3])
     for v in all_vehicles:
         draw_vehicle( *v )
+
+def draw_info():
+    global g_last_step
+    step_per_frame = g_world.time_step - g_last_step
+    g_last_step = g_world.time_step
+    with push_matrix():
+        translate(10,10)
+        text(f"Metrics: {g_metrics[0]:.03f}", 0, 0)
+        text(f"Step per frame: {step_per_frame}", 0, 15)
 
 def hack_check_window_size():
     """ I use tile in Linux, so window size changes after it opens. """
@@ -182,6 +193,7 @@ if __name__ == "__main__":
     g_obs = None
     g_world = None
     g_metrics = [0.]
+    g_last_step = 0
     print("Press Ctrl+C twice to quit...")
     sim = Simulation()
     sim.start()
