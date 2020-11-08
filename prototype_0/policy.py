@@ -22,8 +22,9 @@ class Policy:
         # A demostration of considering the relative position of neighbors
         # From closest to farthest
         if self.num_vehicles is None:
-            self.num_vehicles = obs.shape[0]
-        obs = obs.reshape([self.num_vehicles, self.num_vehicles, 3])
+            self.num_vehicles = obs.shape[0] - 1
+        obs = obs.reshape([self.num_vehicles + 1, self.num_vehicles, 4])
+        obs = obs[1:,:,:]
         inverse_obs = (0.5 - np.abs(obs)) * ((obs>=0).astype(int)*2-1)
         distances = obs[:,:,0] ** 2 + obs[:,:,1] ** 2
         neighbors = np.argsort(distances, axis=1)

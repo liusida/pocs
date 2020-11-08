@@ -3,7 +3,7 @@ import numpy as np
 class Vehicle:
     def __init__(self, world):
         self.world = world
-        self.dim_obs = 3    # pos_x, pos_y, angle
+        self.dim_obs = 4    # pos_x, pos_y, angle
         self.dim_action = 2  # steering, velocity_offset
         self.reset()
 
@@ -31,7 +31,9 @@ class Vehicle:
 
     def get_obs(self):
         # Normalized observations (0,1)
-        return [self.pos_x / self.world.width, self.pos_y / self.world.height, self.angle / 2 / np.pi]
+        return [self.pos_x / self.world.width, self.pos_y / self.world.height, self.angle / 2 / np.pi,
+                self.velocity / min(self.world.width, self.world.height) # Normalization of velocity seems ambiguous, but it will be ok if we stick to square world.
+                ]
 
 class Vehicle_direct_control(Vehicle):
     def step(self, action):
@@ -90,7 +92,12 @@ class World:
         return self.get_obs()
 
     def get_obs(self):
-        """ observation = [ relative_all members ] x n
+        """
+        Return:
+            obs.shape = [num_vehicles + 1, num_vehicles * vehicles.dim_obs]
+            First line is the positions, angles and velocities of all vehicles
+            Second line to the last line is relative positions, angles, and velocities of each vehicle.
+                and they are sorted from nearest to farthest.
         """
         all_members = []
         for vehicle in self.vehicles:
@@ -98,6 +105,7 @@ class World:
         all_members = np.array(all_members)
         # return all_members
         ret = []
+        ret.append(all_members.flatten())
         for i, vehicle in enumerate(self.vehicles):  # if change obs, this should change
             all_members_v = all_members - vehicle.get_obs()
             all_members_v[:, :2] = (all_members_v[:, :2] + 0.5) % 1. - 0.5  # make screen continuous
