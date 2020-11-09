@@ -7,6 +7,7 @@ from p5 import *  # pip install p5
 
 from policy import Policy, Policy_Stationary
 from policy_boids_vanilla import Policy_Boids_Vanilla
+from policy_random_network import Policy_Random_Network
 from utils import log
 from world import World
 
@@ -14,12 +15,13 @@ Policy_classes = {
     "Policy": Policy,
     "Policy_Stationary": Policy_Stationary,
     "Policy_Boids_Vanilla": Policy_Boids_Vanilla,
+    "Policy_Random_Network": Policy_Random_Network,
 }
 
 class Simulation(threading.Thread):
     def run(self):
         global g_obs, g_world, g_metrics, args
-        g_world = World()
+        g_world = World(seed=0)
         g_world.init_vehicles(args.num_vehicles)
 
         g_policy = Policy_classes[args.policy_class](dim_obs=g_world.dim_obs, dim_action=g_world.dim_action)

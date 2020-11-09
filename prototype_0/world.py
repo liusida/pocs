@@ -5,13 +5,13 @@ class Vehicle:
         self.world = world
         self.dim_obs = 4    # pos_x, pos_y, angle
         self.dim_action = 2  # steering, velocity_offset
-        self.reset()
 
     def reset(self):
-        self.pos_x = 0      # [0 ~ world.width]
-        self.pos_y = 0      # [0 ~ world.height]
-        self.angle = 0      # [0 ~ 2 pi)
-        self.velocity = 0   # [0 ~ infty)
+        r = (np.random.random([3])+1 ) * 0.5
+        self.pos_x = r[0] * self.world.width       # [0 ~ world.width)
+        self.pos_y = r[1] * self.world.height      # [0 ~ world.height)
+        self.angle = r[2] * 2 * np.pi              # [0 ~ 2 pi)
+        self.velocity = 0      # [0 ~ infty) (normalized from min(self.world.width, self.world.height))
 
     def step(self, action):
         steering, velocity_offset = action
@@ -52,7 +52,9 @@ class Vehicle_direct_control(Vehicle):
         self.pos_y = self.pos_y % self.world.height
 
 class World:
-    def __init__(self):
+    def __init__(self, seed=0):
+        np.random.seed(seed)
+
         self.dt = 0.01       # delat time, step size
         self.time_step = 0
         self.default_velocity = 100.0
@@ -87,8 +89,6 @@ class World:
     def reset(self):
         for i, vehicle in enumerate(self.vehicles):
             vehicle.reset()
-            vehicle.pos_x = 100 + i * 20
-            vehicle.pos_y = 100
         return self.get_obs()
 
     def get_obs(self):
