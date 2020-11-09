@@ -2,20 +2,21 @@ import time
 import threading
 import argparse
 import numpy as np
-np.random.seed(0)
 from p5 import *  # pip install p5
 
-from policy import Policy, Policy_Stationary
+from policy import Policy
 from policy_boids_vanilla import Policy_Boids_Vanilla
 from policy_random_network import Policy_Random_Network
+from policy_follow_leader import Policy_Follow_Leader
+
 from utils import log
 from world import World
 
 Policy_classes = {
     "Policy": Policy,
-    "Policy_Stationary": Policy_Stationary,
     "Policy_Boids_Vanilla": Policy_Boids_Vanilla,
     "Policy_Random_Network": Policy_Random_Network,
+    "Policy_Follow_Leader": Policy_Follow_Leader,
 }
 
 class Simulation(threading.Thread):
@@ -24,7 +25,7 @@ class Simulation(threading.Thread):
         g_world = World(seed=0)
         g_world.init_vehicles(args.num_vehicles)
 
-        g_policy = Policy_classes[args.policy_class](dim_obs=g_world.dim_obs, dim_action=g_world.dim_action)
+        g_policy = Policy_classes[args.policy_class](world=g_world, dim_obs=g_world.dim_obs, dim_action=g_world.dim_action)
 
         obs = g_world.reset()
 
@@ -82,7 +83,7 @@ def draw_vehicle(pos_x, pos_y, angle, vehicle_id):
         with push_style():
             translate(pos_x * g_world.width, pos_y * g_world.height)
             with push_matrix():
-                rotate(-angle*2*np.pi)
+                rotate(-angle)
                 scale(1.3)
                 fill(Color(136, 177, 112))
                 triangle(p1, p2, p3)

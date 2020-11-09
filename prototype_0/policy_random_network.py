@@ -1,7 +1,10 @@
 # Author: Sida
 # Description:
-# This is an implementation of using a random network as policy
-
+#   A random forward network as policy
+#   input[dim_obs] -> hidden[16] -> output[dim_action]
+#   
+#   Because the obs is relative position, the nearest neighbor (probabiliy x=0.0) will have least effect on the agent.
+#
 
 import time
 import pickle
@@ -17,7 +20,8 @@ from policy import Policy
 
 
 class Policy_Random_Network(Policy):
-    def __init__(self, dim_obs=3, dim_action=2, seed=0):
+    def __init__(self, world, dim_obs=3, dim_action=2, seed=0):
+        self.world = world
         self.dim_obs = dim_obs
         self.dim_action = dim_action
         self.num_vehicles = None
@@ -39,9 +43,11 @@ class Policy_Random_Network(Policy):
             refer to world.get_obs().
         """
         if self.num_vehicles is None:
-            self.num_vehicles = obs.shape[0]
+            self.num_vehicles = obs.shape[0] - 1
+        obs = obs[1:, :] # get rid of the first line
         obs = torch.Tensor(obs)
-        ret = self.net(obs)
+        ret = self.net(obs).numpy()
+        ret[:,0] *= 0.2
         return ret
 
 
@@ -55,4 +61,4 @@ class Net(nn.Module):
         with no_grad():
             x = F.relu(self.fc1(x))
             x = self.fc2(x)
-            return x.numpy()
+            return x

@@ -15,7 +15,6 @@ class Vehicle:
 
     def step(self, action):
         steering, velocity_offset = action
-        steering = steering * 0.1
         velocity_offset = velocity_offset * 10
         self.angle += steering
         self.angle = self.angle % (2 * np.pi)
@@ -31,7 +30,7 @@ class Vehicle:
 
     def get_obs(self):
         # Normalized observations (0,1)
-        return [self.pos_x / self.world.width, self.pos_y / self.world.height, self.angle / 2 / np.pi,
+        return [self.pos_x / self.world.width, self.pos_y / self.world.height, self.angle,
                 self.velocity / min(self.world.width, self.world.height) # Normalization of velocity seems ambiguous, but it will be ok if we stick to square world.
                 ]
 
@@ -77,6 +76,7 @@ class World:
         self.dim_action = v.dim_action
 
     def step(self, action):
+        assert action.shape[0] == self.num_vehicles, "Should be one vehicle per item in action"
         self.time_step += 1
         for i, vehicle in enumerate(self.vehicles):
             vehicle.step(action[i])
@@ -96,8 +96,11 @@ class World:
         Return:
             obs.shape = [num_vehicles + 1, num_vehicles * vehicles.dim_obs]
             First line is the positions, angles and velocities of all vehicles
-            Second line to the last line is relative positions, angles, and velocities of each vehicle.
+            Second line to the last line are relative positions, angles, and velocities of each vehicle.
                 and they are sorted from nearest to farthest.
+            Positions are normalized to [0,1]
+            Angles are not normalized, in [0, 2 pi]
+            Velocities are normalized according to min(windowWidth, windowHeight)
         """
         all_members = []
         for vehicle in self.vehicles:
