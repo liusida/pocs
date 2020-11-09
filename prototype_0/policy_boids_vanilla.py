@@ -17,7 +17,7 @@ class Policy_Boids_Vanilla(Policy):
             refer to world.get_obs().
         """
         if self.num_vehicles is None:
-            self.num_vehicles = obs.shape[0]
+            self.num_vehicles = obs.shape[0] - 1
         ret = np.zeros([self.num_vehicles, 2])
         # TODO: implement the boids
         return ret
