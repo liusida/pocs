@@ -44,7 +44,7 @@ class Policy_Follow_Leader(Policy):
         # action[0,1] = -100
         # Followers
         for i in np.arange(1,self.num_vehicles):
-            # follow the one before me
+            # follow the one before me (Warning: This is not local information anymore.)
             dx = obs[(i-1)*4]-obs[i*4]
             dy = obs[(i-1)*4+1]-obs[i*4+1]
             dx = self.relative_distance(dx)
