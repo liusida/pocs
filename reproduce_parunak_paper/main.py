@@ -3,12 +3,13 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+np.random.seed(0)
 fig, axes = plt.subplots(nrows=2, ncols=2)
 
 for guide in range(2):
     total_timesteps = 250
     total_run = 30
-    log_30 = np.log(30)
+    log_30 = np.log(total_run)
     rho = 20
     rho_2 = rho*rho
 
