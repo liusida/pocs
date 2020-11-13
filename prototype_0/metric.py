@@ -9,9 +9,10 @@ class Metric:
         return self.world.vehicles[0].pos_x / self.world.width  # TODO: for demostration. Should be entropy or something.
 
 class EntropyMetric:
-    def __init__(self, world):
+    def __init__(self, world, **kwargs):
+        print(kwargs)
         self.world = world
-        self.history_len = 100
+        self.history_len = kwargs["history_len"] if "history_len" in kwargs else 100
         self.world_history = np.zeros(shape=(self.history_len, len(self.world.vehicles), 4))
         
     def update_history(self):
@@ -35,23 +36,31 @@ class EntropyMetric:
         raise NotImplementedError
 
 class MicroEntropyMetric(EntropyMetric):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.grid_size= kwargs["grid_size"] if "grid_size" in kwargs else 100
+
     def get_metric(self):
         self.update_history()
         
         total_micro_entropy = 0
         for v_id in range(self.world_history.shape[1]):
             # save and bin to ints.
-            row_history = (self.world_history[:, v_id] * 100).astype(np.int)
+            row_history = (self.world_history[:, v_id] * self.grid_size).astype(np.int)
             vals, counts = np.unique(row_history, return_counts=True, axis=0) # val counts of state history of one particle
             total_micro_entropy += stats.entropy(counts)
         return total_micro_entropy
 
 class MacroEntropyMetric(EntropyMetric):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.grid_size= kwargs["grid_size"] if "grid_size" in kwargs else 10
+
     def get_metric(self):
         self.update_history()
 
         if (self.world_history.shape[1] != 0):
-            world_pos_history = (self.world_history[:, :, :2] * 10).astype(np.int) # grid into 10 cells.
+            world_pos_history = (self.world_history[:, :, :2] * self.grid_size).astype(np.int)
             vals, counts = np.unique(world_pos_history, return_counts=True, axis=0) # val counts of pos x.
             entropy = stats.entropy(counts)
             return entropy
