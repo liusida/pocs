@@ -1,5 +1,4 @@
 import numpy as np
-from metric import Metric
 
 class Vehicle:
     def __init__(self, world):
@@ -66,8 +65,6 @@ class World:
         self.height = 1000
         self.vehicles = []
 
-        self.metric = Metric(self)
-
     def init_vehicles(self, num):
         self.num_vehicles = num
         v = None
@@ -84,9 +81,7 @@ class World:
         for i, vehicle in enumerate(self.vehicles):
             vehicle.step(action[i])
         
-        info = {
-            "metrics": self.calculate_metrics()
-        }
+        info = {}
         return self.get_obs(), info
 
     def reset(self):
@@ -123,6 +118,3 @@ class World:
         for vehicle in self.vehicles:
             all_members.append(vehicle.get_obs())
         return np.array(all_members)
-
-    def calculate_metrics(self):
-        return self.metric.get_metric()
