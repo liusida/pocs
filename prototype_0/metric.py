@@ -45,3 +45,15 @@ class MicroEntropyMetric(EntropyMetric):
             vals, counts = np.unique(row_history, return_counts=True, axis=0) # val counts of state history of one particle
             total_micro_entropy += stats.entropy(counts)
         return total_micro_entropy
+
+class MacroEntropyMetric(EntropyMetric):
+    def get_metric(self):
+        self.update_history()
+
+        if (self.world_history.shape[1] != 0):
+            world_pos_history = (self.world_history[:, :, :2] * 10).astype(np.int) # grid into 10 cells.
+            vals, counts = np.unique(world_pos_history, return_counts=True, axis=0) # val counts of pos x.
+            entropy = stats.entropy(counts)
+            return entropy
+        else:
+            return 0
