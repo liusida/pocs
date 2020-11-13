@@ -8,14 +8,13 @@ class Metric:
     def get_metric(self):
         return self.world.vehicles[0].pos_x / self.world.width  # TODO: for demostration. Should be entropy or something.
 
-class MicroEntropyMetric:
+class EntropyMetric:
     def __init__(self, world):
         self.world = world
         self.history_len = 100
         self.world_history = np.zeros(shape=(self.history_len, len(self.world.vehicles), 4))
         
-    
-    def get_metric(self):
+    def update_history(self):
         # update the history information.
         if self.world_history.shape[1] != len(self.world.vehicles):
             self.world_history = np.zeros(shape=(self.history_len, len(self.world.vehicles), 4))
@@ -31,6 +30,13 @@ class MicroEntropyMetric:
                                                             self.world.vehicles[v_id].angle / (np.pi * 2)]
         self.history_idx += 1
         self.history_idx %= self.history_len
+
+    def get_metric(self):
+        raise NotImplementedError
+
+class MicroEntropyMetric(EntropyMetric):
+    def get_metric(self):
+        self.update_history()
         
         total_micro_entropy = 0
         for v_id in range(self.world_history.shape[1]):
