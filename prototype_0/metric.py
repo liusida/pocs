@@ -42,6 +42,6 @@ class MicroEntropyMetric(EntropyMetric):
         for v_id in range(self.world_history.shape[1]):
             # save and bin to ints.
             row_history = (self.world_history[:, v_id] * 100).astype(np.int)
-            vals, counts = np.unique(row_history, return_counts=True, axis=0) # val counts of pos x.
+            vals, counts = np.unique(row_history, return_counts=True, axis=0) # val counts of state history of one particle
             total_micro_entropy += stats.entropy(counts)
         return total_micro_entropy
