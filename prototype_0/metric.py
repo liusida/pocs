@@ -1,6 +1,11 @@
 import numpy as np
 from  scipy import stats
 
+def calc_entropy(pk):
+    if pk is None:
+        return 0
+    pk2 = np.array(pk)/np.sum(pk)
+    return -np.sum(pk2 * np.log2(pk2))
 class Metric:
     def __init__(self, world):
         self.world = world
@@ -37,7 +42,7 @@ class EntropyMetric:
 
 class MicroEntropyMetric(EntropyMetric):
     def __init__(self, *args, **kwargs):
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.grid_size= kwargs["grid_size"] if "grid_size" in kwargs else 100
 
     def get_metric(self):
@@ -48,8 +53,10 @@ class MicroEntropyMetric(EntropyMetric):
             # save and bin to ints.
             row_history = (self.world_history[:, v_id] * self.grid_size).astype(np.int)
             vals, counts = np.unique(row_history, return_counts=True, axis=0) # val counts of state history of one particle
-            total_micro_entropy += stats.entropy(counts)
-        return total_micro_entropy
+            curr_entropy = calc_entropy(counts)
+            curr_entropy /= (np.log2( 1/self.history_len)* -1) # normalize to 0 to 1
+            total_micro_entropy += curr_entropy
+        return total_micro_entropy / self.world_history.shape[1] # normalize to 0 to 1
 
 class MacroEntropyMetric(EntropyMetric):
     def __init__(self, *args, **kwargs):
@@ -62,7 +69,7 @@ class MacroEntropyMetric(EntropyMetric):
         if (self.world_history.shape[1] != 0):
             world_pos_history = (self.world_history[:, :, :2] * self.grid_size).astype(np.int)
             vals, counts = np.unique(world_pos_history, return_counts=True, axis=0) # val counts of pos x.
-            entropy = stats.entropy(counts)
-            return entropy
+            entropy = calc_entropy(counts)
+            return entropy / (np.log2( 1/self.history_len)* -1) # normalize to 0 to 1.
         else:
             return 0
