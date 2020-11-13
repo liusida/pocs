@@ -9,7 +9,7 @@ from policy_boids_vanilla import Policy_Boids_Vanilla
 from policy_random_network import Policy_Random_Network
 from policy_follow_leader import Policy_Follow_Leader
 
-from utils import log
+import utils
 from world import World
 
 Policy_classes = {
@@ -46,6 +46,7 @@ def setup():
 
 
 def draw():
+    # utils.reset_timer("Outside Draw Function")
     hack_check_window_size()
     background(27, 73, 98)
     draw_info()
@@ -53,6 +54,7 @@ def draw():
     for i, v in enumerate(all_vehicles):
         v = v[:3] # first three observations are pos_x, pos_y, angle
         draw_vehicle(*v, vehicle_id=i)
+    # utils.reset_timer("In Draw Function")
 
 
 def draw_info():
@@ -77,8 +79,8 @@ def draw_vehicle(pos_x, pos_y, angle, vehicle_id):
     p1 = [0, 10]
     p2 = [-3, -5]
     p3 = [+3, -5]
-    p4 = [-1, +5]
-    p5 = [+1, +5]
+    # p4 = [-1, +5]
+    # p5 = [+1, +5]
     with push_matrix():
         with push_style():
             translate(pos_x * g_world.width, pos_y * g_world.height)
@@ -87,8 +89,9 @@ def draw_vehicle(pos_x, pos_y, angle, vehicle_id):
                 scale(1.3)
                 fill(Color(136, 177, 112))
                 triangle(p1, p2, p3)
-                fill(Color(162, 184, 167))
-                triangle(p1, p4, p5)
+                # less decoration, a little faster.
+                # fill(Color(162, 184, 167))
+                # triangle(p1, p4, p5)
             text(f"{vehicle_id}", 0, -20)
 
 

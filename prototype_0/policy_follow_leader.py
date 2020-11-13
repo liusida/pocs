@@ -23,6 +23,13 @@ class Policy_Follow_Leader(Policy):
             self.seed = seed
         np.random.seed(seed)  # generate a new system every time
 
+    def relative_distance(self, x):
+        if x>0.5:
+            x -= 1
+        elif x<-0.5:
+            x += 1
+        return x
+
     def get_action(self, obs):
         """
         obs:
@@ -37,10 +44,23 @@ class Policy_Follow_Leader(Policy):
         # action[0,1] = -100
         # Followers
         for i in np.arange(1,self.num_vehicles):
-            x = (obs[0]-obs[i*4] ) * self.world.width
-            y = (obs[1]-obs[i*4+1]) * self.world.height
+            # follow the one before me (Warning: This is not local information anymore.)
+            dx = obs[(i-1)*4]-obs[i*4]
+            dy = obs[(i-1)*4+1]-obs[i*4+1]
+            dx = self.relative_distance(dx)
+            dy = self.relative_distance(dy)
+            distance = dx*dx + dy*dy
+            dx = dx * self.world.width
+            dy = dy * self.world.height
+            
             current_angle = obs[i*4+2]
-            target_angle = np.arctan2( y, x )
+            target_angle = np.arctan2( dy, dx )
             target_angle = np.pi/2 - target_angle
             action[i,0] = - current_angle + target_angle
+            
+            if distance > 0.005: # don't fall too far behind
+                action[i,1] = action[i-1,1]
+            else:
+                action[i,1] = -3*(i)/self.num_vehicles
+
         return action

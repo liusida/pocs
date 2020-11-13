@@ -1,4 +1,5 @@
 import numpy as np
+from metric import Metric
 
 class Vehicle:
     def __init__(self, world):
@@ -65,6 +66,8 @@ class World:
         self.height = 1000
         self.vehicles = []
 
+        self.metric = Metric(self)
+
     def init_vehicles(self, num):
         self.num_vehicles = num
         v = None
@@ -122,4 +125,4 @@ class World:
         return np.array(all_members)
 
     def calculate_metrics(self):
-        return self.vehicles[0].pos_x / self.width  # TODO: for demostration. Should be entropy or something.
+        return self.metric.get_metric()
