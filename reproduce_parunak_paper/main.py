@@ -71,7 +71,7 @@ for guide in range(2):
         ax.plot(data[i, 0, 0, :], data[i, 0, 1, :], linewidth=0.5)
 
     grid_dim_x = grid_dim_y = 100/15
-    print((99.999+1e-10) // grid_dim_x) # idx should be 0 ~ 4
+    # print((99.999+1e-10) // grid_dim_x) # idx should be 0 ~ 4
 
     idx = (data[:,:,0,:] + 1e-10) // grid_dim_x
     idy = (data[:,:,0,:] + 1e-10) // grid_dim_y
@@ -92,4 +92,5 @@ for guide in range(2):
     ax.set_ylabel("Macro Entropy")
 
 plt.tight_layout()
+plt.savefig("Fig.6 and 8.png")
 plt.show()
