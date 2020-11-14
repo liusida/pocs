@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Vehicle:
     def __init__(self, world):
         self.world = world
@@ -7,48 +8,33 @@ class Vehicle:
         self.dim_action = 2  # steering, velocity_offset
 
     def reset(self):
-        r = (np.random.random([3])+1 ) * 0.5
-        self.pos_x = r[0] * self.world.width       # [0 ~ world.width)
-        self.pos_y = r[1] * self.world.height      # [0 ~ world.height)
+        r = (np.random.random([3])+1) * 0.5
+        self.pos_x = r[0]       # [0 ~ 1)
+        self.pos_y = r[1]       # [0 ~ 1)
         self.angle = r[2] * 2 * np.pi              # [0 ~ 2 pi)
-        self.velocity = 0      # [0 ~ infty) (normalized from min(self.world.width, self.world.height))
+        self.velocity = 0      # [0 ~ infty)
 
     def step(self, action):
-        steering, velocity_offset = action
-        velocity_offset = velocity_offset * 10
+        """action = [steering, velocity]"""
+        steering, velocity = action
         self.angle += steering
         self.angle = self.angle % (2 * np.pi)
-        self.velocity = self.world.default_velocity + velocity_offset
+        self.velocity = velocity
         if self.velocity < 0:
             self.velocity = 0
         # update position after updating angle and velocity, the vehicle can respond faster
         self.pos_x += np.sin(self.angle) * self.velocity * self.world.dt
         self.pos_y += np.cos(self.angle) * self.velocity * self.world.dt
 
-        self.pos_x = self.pos_x % self.world.width
-        self.pos_y = self.pos_y % self.world.height
+        if not 0 <= self.pos_x <= 1:
+            self.pos_x = self.pos_x % 1
+        if not 0 <= self.pos_y <= 1:
+            self.pos_y = self.pos_y % 1
 
     def get_obs(self):
         # Normalized observations (0,1)
-        return [self.pos_x / self.world.width, self.pos_y / self.world.height, self.angle,
-                self.velocity / min(self.world.width, self.world.height) # Normalization of velocity seems ambiguous, but it will be ok if we stick to square world.
-                ]
+        return [self.pos_x, self.pos_y, self.angle, self.velocity]
 
-class Vehicle_direct_control(Vehicle):
-    def step(self, action):
-        angle, velocity_offset = action
-        angle = angle * 2 * np.pi
-        velocity_offset = velocity_offset * 10
-        self.angle = angle
-        self.velocity = self.world.default_velocity + velocity_offset
-        if self.velocity < 0:
-            self.velocity = 0
-        # update position after updating angle and velocity, the vehicle can respond faster
-        self.pos_x += np.sin(self.angle) * self.velocity * self.world.dt
-        self.pos_y += np.cos(self.angle) * self.velocity * self.world.dt
-
-        self.pos_x = self.pos_x % self.world.width
-        self.pos_y = self.pos_y % self.world.height
 
 class World:
     def __init__(self, seed=0):
@@ -56,7 +42,6 @@ class World:
 
         self.dt = 0.01       # delat time, step size
         self.time_step = 0
-        self.default_velocity = 100.0
 
         self.dim_obs = 0
         self.dim_action = 0
@@ -111,10 +96,45 @@ class World:
             all_members_v = all_members - vehicle.get_obs()
             all_members_v[:, :2] = (all_members_v[:, :2] + 0.5) % 1. - 0.5  # make screen continuous
             ret.append(all_members_v.flatten())
-        return np.array(ret)
+        self.current_obs = np.array(ret)
+        return self.current_obs
 
     def get_absolute_obs(self):
         all_members = []
         for vehicle in self.vehicles:
             all_members.append(vehicle.get_obs())
         return np.array(all_members)
+
+    def get_action_from_pos_x_pos_y_velocity(self, a):
+        assert a.shape == (self.num_vehicles, 3)
+        target_pos = a[:,:2]
+        obs = self.current_obs[0,:]
+        obs = obs.reshape([self.num_vehicles, 4])
+        current_pos = obs[:,:2]
+        current_angle = obs[:,2]
+        offset = target_pos-current_pos
+        target_angle = np.arctan2(offset[:,0], offset[:,1])
+
+        ret = np.zeros([self.num_vehicles, 2])
+        ret[:,0] = target_angle - current_angle
+        ret[:,1] = a[:,2]
+        return ret
+
+    def get_action_from_angle_velocity_offset(self, a):
+        assert a.shape == (self.num_vehicles, 2)
+        ret = np.zeros([self.num_vehicles, 2])
+        ret[:,0] = a[:,0]
+        ret[:,1] = a[:,1] + 0.1
+        return ret
+
+#   y-direction
+#   |        /
+#   | angle /
+#   |      /
+#   |     /
+#   |    /
+#   |   /
+#   |  /
+#   | /
+#   +------------------>  x-direction
+#  Origin

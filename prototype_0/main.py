@@ -1,4 +1,5 @@
 import time
+import numbers
 import threading
 import argparse
 import numpy as np
@@ -42,7 +43,13 @@ class Simulation(threading.Thread):
         while True:
             action = g_policy.get_action(obs)
             obs, info = g_world.step(action)
-            g_metrics_val[0] = g_metrics.get_metric()
+            ret = g_metrics.get_metric()
+            if isinstance(ret, numbers.Number):
+                g_metrics_val[0] = ret # no extra info returned.
+                g_metrics_val[1] = 0
+            else:
+                g_metrics_val[0] = ret[0]
+                g_metrics_val[1] = ret[1]
             # set g_obs for visualization
             g_obs = g_world.get_absolute_obs()
             time.sleep(0.01)
@@ -57,8 +64,11 @@ def setup():
 
 def draw():
     # utils.reset_timer("Outside Draw Function")
-    hack_check_window_size()
     background(27, 73, 98)
+    with push_style():
+        no_fill()
+        stroke(0,0,0)
+        rect(0, 0, g_world.width, g_world.height)
     draw_info()
     all_vehicles = g_obs
     for i, v in enumerate(all_vehicles):
@@ -66,45 +76,48 @@ def draw():
         draw_vehicle(*v, vehicle_id=i)
     # utils.reset_timer("In Draw Function")
 
-
 def draw_info():
     global g_last_step
     step_per_frame = g_world.time_step - g_last_step
     g_last_step = g_world.time_step
+    text("Origin", 0, g_world.height)
     with push_matrix():
         translate(10, 10)
-        text(f"Time Step: {g_world.time_step}", 0, 0)
-        text(f"{args.metric_class}: {g_metrics_val[0]:.03f}", 0, 15)
-        text(f"Step per frame: {step_per_frame}", 0, 30)
-
-
-def hack_check_window_size():
-    """ I use tile in Linux, so window size changes after it opens. """
-    global g_world
-    if g_world.width != p5.sketch.size[0] and g_world.height != p5.sketch.size[1]:
-        g_world.width = p5.sketch.size[0]
-        g_world.height = p5.sketch.size[1]
-
+        line = 0
+        text(f"Time Step: {g_world.time_step}", 0, line*15)
+        line += 1
+        text(f"{args.metric_class}: {g_metrics_val[0]:.03f}", 0, line*15)
+        line += 1
+        text(f"counts: {g_metrics_val[1]}", 0, line*15)
+        line += 1
+        text(f"Step per frame: {step_per_frame}", 0, line*15)
 
 def draw_vehicle(pos_x, pos_y, angle, vehicle_id):
-    p1 = [0, 10]
-    p2 = [-3, -5]
-    p3 = [+3, -5]
-    # p4 = [-1, +5]
-    # p5 = [+1, +5]
+    p1 = [0, -10]
+    p2 = [-3, 5]
+    p3 = [+3, 5]
     with push_matrix():
         with push_style():
-            translate(pos_x * g_world.width, pos_y * g_world.height)
+            translate(pos_x * g_world.width, (1-pos_y) * g_world.height)
             with push_matrix():
-                rotate(-angle)
+                rotate(angle)
                 scale(1.3)
                 fill(Color(136, 177, 112))
                 triangle(p1, p2, p3)
-                # less decoration, a little faster.
-                # fill(Color(162, 184, 167))
-                # triangle(p1, p4, p5)
             text(f"{vehicle_id}", 0, -20)
 
+#
+#   y-direction
+#   |        /
+#   | angle /
+#   |      /
+#   |     /
+#   |    /
+#   |   /
+#   |  /
+#   | /
+#   +------------------>  x-direction
+#  Origin
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -115,7 +128,7 @@ if __name__ == "__main__":
     g_obs = None
     g_world = None
     g_metrics = None
-    g_metrics_val = [0.]
+    g_metrics_val = [0., 0.]
     g_last_step = 0
     print("Press Ctrl+C twice to quit...")
     # Start Simulation Thread
