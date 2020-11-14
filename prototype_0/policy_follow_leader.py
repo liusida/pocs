@@ -41,7 +41,7 @@ class Policy_Follow_Leader(Policy):
         action = np.zeros([self.num_vehicles,2])
         # Leader
         action[0,0] += (np.random.random() - 0.5)*0.1
-        # action[0,1] = -100
+        action[0,1] = 0.1
         # Followers
         for i in np.arange(1,self.num_vehicles):
             # follow the one before me (Warning: This is not local information anymore.)
@@ -50,8 +50,6 @@ class Policy_Follow_Leader(Policy):
             dx = self.relative_distance(dx)
             dy = self.relative_distance(dy)
             distance = dx*dx + dy*dy
-            dx = dx * self.world.width
-            dy = dy * self.world.height
             
             current_angle = obs[i*4+2]
             target_angle = np.arctan2( dy, dx )
@@ -61,6 +59,5 @@ class Policy_Follow_Leader(Policy):
             if distance > 0.005: # don't fall too far behind
                 action[i,1] = action[i-1,1]
             else:
-                action[i,1] = -3*(i)/self.num_vehicles
-
+                action[i,1] = 0.1 * (1 - i/self.num_vehicles)
         return action
