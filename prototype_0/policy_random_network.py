@@ -20,16 +20,15 @@ from policy import Policy
 
 
 class Policy_Random_Network(Policy):
-    def __init__(self, world, dim_obs=3, dim_action=2, seed=0):
+    def __init__(self, world, dim_obs=3, dim_action=2, seed=None):
         self.world = world
         self.dim_obs = dim_obs
         self.dim_action = dim_action
         self.num_vehicles = None
         if seed is None:
-            self.seed = int(time.time())
-        else:
-            self.seed = seed
-        np.random.seed(seed)  # generate a new system every time
+            seed = int(time.time()) # generate a new system every time
+        self.seed = seed
+        np.random.seed(seed)
         torch.manual_seed(seed)
         self.net = Net(dim_obs, dim_action, 16)
         # Path("data_random_network").mkdir(parents=True, exist_ok=True)
@@ -46,8 +45,10 @@ class Policy_Random_Network(Policy):
             self.num_vehicles = obs.shape[0] - 1
         obs = obs[1:, :] # get rid of the first line
         obs = torch.Tensor(obs)
-        ret = self.net(obs).numpy()
-        ret[:,0] *= 0.2
+        ret = self.net(obs)
+        ret[:,0] *= 0.1
+        ret[:,1] = (ret[:,1] + 1) * 0.1
+        ret = ret.numpy()
         return ret
 
 
