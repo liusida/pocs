@@ -46,7 +46,6 @@ class Policy_Boids_Vanilla(Policy):
             curr_y = obs[i*4+1] 
             current_angle = obs[i*4+2]
             current_veclocity = obs[i*4+3]
-            # print(current_veclocity)
 
             neigh = self.find_nearest_neighbors(obs, i)
 
@@ -61,10 +60,6 @@ class Policy_Boids_Vanilla(Policy):
                 else:
                     action[i,0] = np.mean([align_request, cohere_request[0]]) - current_angle
                     action[i,1] = current_veclocity
-                # action[i,1] = np.mean([cohere_request[1]]) * 2
-
-                # action[i,0] = cohere_request[0] - current_angle
-                # action[i,1] = cohere_request[1]
 
             else:  # continue in same direction/with same speed
                 action[i,0] = 0
