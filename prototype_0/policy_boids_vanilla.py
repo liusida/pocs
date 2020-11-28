@@ -12,7 +12,7 @@ from policy import Policy
 from sklearn.preprocessing import normalize
 
 class Policy_Boids_Vanilla(Policy):
-    def __init__(self, world, dim_obs=3, dim_action=2, seed=2):
+    def __init__(self, world, dim_obs=3, dim_action=2):
 
         self.world = world
         self.dim_obs = dim_obs
@@ -20,13 +20,6 @@ class Policy_Boids_Vanilla(Policy):
         self.num_vehicles = None
 
         self.neighborhood_dist = 0.15  # arbitrary
-
-        if seed is None:
-            self.seed = int(time.time())
-        else:
-            self.seed = seed
-
-        np.random.seed(self.seed)
 
     def get_action(self, obs):
         """
@@ -53,6 +46,11 @@ class Policy_Boids_Vanilla(Policy):
                 separate_request = self.separation(neigh, i, curr_x, curr_y)
                 align_request = self.alignment(neigh, i, curr_x, curr_y)
                 cohere_request = self.cohesion(neigh, i, curr_x, curr_y)
+
+
+                # action[i,0] = np.mean([align_request, cohere_request[0]]) - current_angle
+                # action[i,1] = cohere_request[1]
+
 
                 if separate_request is not None:
                     action[i,0] = np.mean([0.25*align_request, 0.25*cohere_request[0], 0.5*separate_request[0]]) - current_angle
@@ -95,7 +93,7 @@ class Policy_Boids_Vanilla(Policy):
         for n in neigh:
             if np.linalg.norm([n[0]-curr_x, n[1]-curr_y])<thresh:
                 too_close.append(n)
-        
+
         if len(too_close) > 0:
             too_close = np.array(too_close)
 
@@ -105,8 +103,13 @@ class Policy_Boids_Vanilla(Policy):
             x_vec = curr_x - mean_x
             y_vec = curr_y - mean_y
 
-            target_angle = np.arctan2(x_vec, y_vec)
-            target_angle = -np.pi/2 + target_angle
+            target_angle = np.arctan2(y_vec, x_vec)
+
+            if target_angle < 0:
+                target_angle = np.pi/2 + np.abs(target_angle)
+            else:
+                target_angle = np.pi/2 - target_angle
+
             target_speed = np.linalg.norm([x_vec,y_vec])
 
             return target_angle, target_speed
@@ -126,8 +129,12 @@ class Policy_Boids_Vanilla(Policy):
         x_vec = mean_x - curr_x
         y_vec = mean_y - curr_y
 
-        target_angle = np.arctan2(x_vec, y_vec) 
-        target_angle = -np.pi/2 + target_angle
+        target_angle = np.arctan2(y_vec, x_vec) 
+        if target_angle < 0:
+            target_angle = np.pi/2 + np.abs(target_angle)
+        else:
+            target_angle = np.pi/2 - target_angle
+
         target_speed = np.linalg.norm([x_vec, y_vec])
 
         return target_angle, target_speed
