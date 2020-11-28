@@ -55,11 +55,11 @@ class Policy_Boids_Vanilla(Policy):
                 cohere_request = self.cohesion(neigh, i, curr_x, curr_y)
 
                 if separate_request is not None:
-                    action[i,0] = np.mean([align_request, cohere_request[0], separate_request[0]]) - current_angle
+                    action[i,0] = np.mean([0.25*align_request, 0.25*cohere_request[0], 0.5*separate_request[0]]) - current_angle
                     action[i,1] = np.mean([separate_request[1], cohere_request[1]]) * 5
                 else:
                     action[i,0] = np.mean([align_request, cohere_request[0]]) - current_angle
-                    action[i,1] = current_veclocity
+                    action[i,1] = cohere_request[1]
 
             else:  # continue in same direction/with same speed
                 action[i,0] = 0
@@ -99,18 +99,14 @@ class Policy_Boids_Vanilla(Policy):
         if len(too_close) > 0:
             too_close = np.array(too_close)
 
-            # weighted centroid (closer neighbors weighted more heavily)
-            xs = np.power(too_close[:,0]-curr_x,2) 
-            ys = np.power(too_close[:,1]-curr_y,2)
-            d = np.sqrt(xs + ys) # length 1 x n
+            mean_x = np.mean(too_close[:,0])
+            mean_y = np.mean(too_close[:,1])
 
-            weighted_x = np.sum(too_close[:,0]/d)/np.sum(1/d)
-            weighted_y = np.sum(too_close[:,1]/d)/np.sum(1/d)
-
-            x_vec = curr_x - weighted_x
-            y_vec = curr_y - weighted_y
+            x_vec = curr_x - mean_x
+            y_vec = curr_y - mean_y
 
             target_angle = np.arctan2(x_vec, y_vec)
+            target_angle = -np.pi/2 + target_angle
             target_speed = np.linalg.norm([x_vec,y_vec])
 
             return target_angle, target_speed
@@ -130,7 +126,8 @@ class Policy_Boids_Vanilla(Policy):
         x_vec = mean_x - curr_x
         y_vec = mean_y - curr_y
 
-        target_angle = np.arctan2(x_vec, y_vec) #add/subtract 2pi??
+        target_angle = np.arctan2(x_vec, y_vec) 
+        target_angle = -np.pi/2 + target_angle
         target_speed = np.linalg.norm([x_vec, y_vec])
 
         return target_angle, target_speed
