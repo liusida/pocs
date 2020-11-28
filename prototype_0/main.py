@@ -11,6 +11,7 @@ from policy_random_network import Policy_Random_Network
 from policy_follow_leader import Policy_Follow_Leader
 
 from metric import Metric, MicroEntropyMetric, MacroEntropyMetric
+from metric_hse import HSEMetric
 
 import utils
 from world import World
@@ -26,6 +27,7 @@ Metric_classes = {
     "Metric": Metric,
     "Micro_Entropy": MicroEntropyMetric,
     "Macro_Entropy": MacroEntropyMetric,
+    "HSE": HSEMetric,
 }
 
 class Simulation(threading.Thread):
