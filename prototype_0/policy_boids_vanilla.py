@@ -38,7 +38,7 @@ class Policy_Boids_Vanilla(Policy):
             curr_x = obs[i*4]
             curr_y = obs[i*4+1] 
             current_angle = obs[i*4+2]
-            current_veclocity = obs[i*4+3]
+            current_velocity = obs[i*4+3]
 
             neigh = self.find_nearest_neighbors(obs, i)
 
@@ -56,7 +56,7 @@ class Policy_Boids_Vanilla(Policy):
 
             else:  # continue in same direction/with same speed
                 action[i,0] = 0
-                action[i,1] = current_veclocity
+                action[i,1] = current_velocity
 
         return action
 
