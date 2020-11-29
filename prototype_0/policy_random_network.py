@@ -20,11 +20,11 @@ from policy import Policy
 
 
 class Policy_Random_Network(Policy):
-    def __init__(self, world, dim_obs=3, dim_action=2, seed=None):
+    def __init__(self, world, dim_obs=3, dim_action=2, seed=None, num_vehicles=None):
         self.world = world
         self.dim_obs = dim_obs
         self.dim_action = dim_action
-        self.num_vehicles = None
+        self.num_vehicles = num_vehicles
         if seed is None:
             seed = int(time.time()) # generate a new system every time
         self.seed = seed

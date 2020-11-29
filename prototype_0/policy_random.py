@@ -5,11 +5,11 @@ import numpy as np
 from utils import log
 
 class Policy_Random:
-    def __init__(self, world, dim_obs=3, dim_action=2):
+    def __init__(self, world, dim_obs=3, dim_action=2, num_vehicles=None):
         self.world = world
         self.dim_obs = dim_obs
         self.dim_action = dim_action
-        self.num_vehicles = None
+        self.num_vehicles = num_vehicles
 
 
     def get_action(self, obs):

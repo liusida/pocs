@@ -9,6 +9,7 @@ from policy import Policy
 from policy_boids_vanilla import Policy_Boids_Vanilla
 from policy_random_network import Policy_Random_Network
 from policy_follow_leader import Policy_Follow_Leader
+from policy_random import Policy_Random
 
 from metric import Metric, MicroEntropyMetric, MacroEntropyMetric
 from metric_hse import HSEMetric
@@ -21,6 +22,7 @@ Policy_classes = {
     "Policy_Boids_Vanilla": Policy_Boids_Vanilla,
     "Policy_Random_Network": Policy_Random_Network,
     "Policy_Follow_Leader": Policy_Follow_Leader,
+    "Policy_Random": Policy_Random
 }
 
 Metric_classes = {
@@ -38,7 +40,7 @@ class Simulation(threading.Thread):
 
         g_metrics = Metric_classes[args.metric_class](world=g_world)
 
-        g_policy = Policy_classes[args.policy_class](world=g_world, dim_obs=g_world.dim_obs, dim_action=g_world.dim_action)
+        g_policy = Policy_classes[args.policy_class](world=g_world, dim_obs=g_world.dim_obs, dim_action=g_world.dim_action, num_vehicles=args.num_vehicles)
 
         obs = g_world.reset()
 
