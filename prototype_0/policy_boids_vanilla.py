@@ -46,12 +46,7 @@ class Policy_Boids_Vanilla(Policy):
                 separate_request = self.separation(neigh, i, curr_x, curr_y)
                 align_request = self.alignment(neigh, i, curr_x, curr_y)
                 cohere_request = self.cohesion(neigh, i, curr_x, curr_y)
-
-
-                # action[i,0] = np.mean([align_request, cohere_request[0]]) - current_angle
-                # action[i,1] = cohere_request[1]
-
-
+                
                 if separate_request is not None:
                     action[i,0] = np.mean([0.25*align_request, 0.25*cohere_request[0], 0.5*separate_request[0]]) - current_angle
                     action[i,1] = np.mean([separate_request[1], cohere_request[1]]) * 5
