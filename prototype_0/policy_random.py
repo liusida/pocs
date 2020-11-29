@@ -1,3 +1,6 @@
+# Author: Caitlin
+# Description:
+#   Random behavior - null model
 import numpy as np
 from utils import log
 
