@@ -12,11 +12,11 @@ from policy import Policy
 
 
 class Policy_Follow_Leader(Policy):
-    def __init__(self, world, dim_obs=3, dim_action=2, seed=0, num_vehicles=None):
+    def __init__(self, world, dim_obs=3, dim_action=2, seed=0):
         self.world = world
         self.dim_obs = dim_obs
         self.dim_action = dim_action
-        self.num_vehicles = num_vehicles
+        self.num_vehicles = None
         if seed is None:
             self.seed = int(time.time())
         else:

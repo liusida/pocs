@@ -10,6 +10,7 @@ from policy_boids_vanilla import Policy_Boids_Vanilla
 from policy_random_network import Policy_Random_Network
 from policy_follow_leader import Policy_Follow_Leader
 from policy_random import Policy_Random
+from policy_random_network2 import Policy_Random_Network2
 
 from metric import Metric, MicroEntropyMetric, MacroEntropyMetric
 from metric_hse import HSEMetric
@@ -22,7 +23,8 @@ Policy_classes = {
     "Policy_Boids_Vanilla": Policy_Boids_Vanilla,
     "Policy_Random_Network": Policy_Random_Network,
     "Policy_Follow_Leader": Policy_Follow_Leader,
-    "Policy_Random": Policy_Random
+    "Policy_Random": Policy_Random,
+    "Policy_Random_Network2": Policy_Random_Network2
 }
 
 Metric_classes = {
@@ -40,11 +42,12 @@ class Simulation(threading.Thread):
 
         g_metrics = Metric_classes[args.metric_class](world=g_world)
 
-        g_policy = Policy_classes[args.policy_class](world=g_world, dim_obs=g_world.dim_obs, dim_action=g_world.dim_action, num_vehicles=args.num_vehicles)
+        g_policy = Policy_classes[args.policy_class](world=g_world, dim_obs=g_world.dim_obs, dim_action=g_world.dim_action)
 
         obs = g_world.reset()
 
         while True:
+        # for i in range(1):
             action = g_policy.get_action(obs)
             obs, info = g_world.step(action)
             ret = g_metrics.get_metric()
