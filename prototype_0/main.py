@@ -47,7 +47,6 @@ class Simulation(threading.Thread):
         obs = g_world.reset()
 
         while True:
-        # for i in range(1):
             action = g_policy.get_action(obs)
             obs, info = g_world.step(action)
             ret = g_metrics.get_metric()

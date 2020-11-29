@@ -15,55 +15,62 @@ class Policy_Random_Network2:
         self.dim_obs = dim_obs
         self.dim_action = dim_action
         self.num_vehicles = None
-        self.perception = 0.25
+        self.perception = 0.15
 
-        if seed is None:
-            seed = int(time.time()) # generate a new system every time
-        self.seed = seed
-        np.random.seed(seed)
+        # if seed is None:
+        #     seed = int(time.time()) # generate a new system every time
+        # self.seed = seed
+        # np.random.seed(seed)
 
         self.model = self.init_model()
 
         print(f"Random network with seed {seed}")
 
     def init_model(self):
-        print(self.dim_obs)
-        print(self.num_vehicles)
-        return np.random.random((self.dim_obs*self.num_vehicles,self.dim_action))*2-1
+        return np.random.random((self.dim_obs,self.dim_action))*2-1
 
-    def relu(self):
-        pass
+    def relu(self, x):
+        return np.maximum(np.zeros(x.shape),x)
 
-    def forward_pass(self):
-        # execute the network
-        pass
+    def forward_pass(self, inputs):
+        # execute forward pass of network
+
+        weights = self.model[:len(inputs),:]
+
+        output = np.dot(inputs,weights)
+        output = self.relu(output)
+
+        return output
 
     def get_action(self, obs):
-        print(self.model.shape)
+        if self.num_vehicles is None:
+            self.num_vehicles = obs.shape[0] - 1
+
+        action = np.zeros([self.num_vehicles, 2])
 
         obs = obs[0,:]
         for i in np.arange(self.num_vehicles): 
-            curr_x = obs[i*4]
-            curr_y = obs[i*4+1] 
-            current_angle = obs[i*4+2]
-            current_veclocity = obs[i*4+3]
 
             neigh = self.find_nearest_neighbors(obs, i)
             neigh=neigh.flatten()
-            print(neigh.shape)
+            
+            act = self.forward_pass(inputs=neigh)
+            action[i,0]=act[0]*0.1
+            action[i,1]=(act[1]+1)*0.1
 
-        action = np.zeros([self.num_vehicles, 2])
         return action
 
     def find_nearest_neighbors(self, obs, vehicle):
         '''
-        returns matrix of nearest neighbors of vehicle within self.neighborhood_dist
-            neigh = (# neighbors x 4)
+        returns matrix of nearest neighbors of vehicle within self.perception (including self information)
+            neigh = (# neighbors + 1 x 4)
         '''
+        self_info = obs[vehicle*4:vehicle*4+4] 
         x1 = obs[vehicle*4] 
-        y1 = obs[vehicle*4+1] 
+        y1 = obs[vehicle*4+1]
         others = np.concatenate((obs[:4*(vehicle)],obs[4*(vehicle)+4:]))
         neigh = []
+        neigh.append(self_info)
         for i in range(self.num_vehicles-1):
             x2 = others[i*4]
             y2 = others[i*4+1]   
