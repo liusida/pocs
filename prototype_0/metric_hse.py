@@ -5,8 +5,71 @@
 # Main idea:
 # use Numerical Taxonamy to automatically generate species, then calculate entropy summing across the swarm.
 
+# Social Entropy was proposed in (Bailey, 1990)
+# Balch adopts the terminology to robotic swarm with slightly different definition.
+# Simple Social Entropy in Balch's work is just Shannon's Entropy with specific definition of state and individual.
+# Limitation: can't tell how differet the states are. e.g. a rat and a mouse, v.s. a worm and a elephant.
+
+# Numerical Taxonomy is a biology field that orgnizing individuals into a tree accroding to their classification position.
+from scipy.stats import entropy
+import numpy as np
 from metric import Metric
 
 
 class HSEMetric(Metric):
-    pass
+    def distance(self, point1, point2):
+        return np.linalg.norm(point1 - point2)
+
+    def clustering(self, data, h):
+        """Implementation of Cu algorithm for clustering at level h
+        assuming data is a 2D numpy array, contains the classification position of each agent.
+        h is a number between 0 and 1. 0: every individual is a cluster. 1: all individuals are in one cluster.
+        """
+        dimension = data.shape[1]
+        h = h * np.sqrt(dimension) # h need to be normalized to 0 ~ max possible distance
+        num_agents = data.shape[0]
+        clusters = []
+        for i in range(num_agents):
+            clusters.append({i})
+        
+        for i, c in enumerate(clusters):
+            for j in range(num_agents):
+                if j==i:
+                    continue
+                for k in c:
+                    if self.distance(data[k], data[j]) > h:
+                        continue
+                    c.add(j)
+                    break
+        
+        # Discard redundant clusters
+        unique_clusters = {}
+        for c in clusters:
+            c = tuple(c)
+            if c in unique_clusters:
+                unique_clusters[c] += 1
+            else:
+                unique_clusters[c] = 1
+        unique_clusters = list(unique_clusters.keys())
+
+        return unique_clusters
+
+    def social_entropy(self, unique_clusters):
+        total = 0
+        pk = []
+        for c in unique_clusters:
+            total += len(c)
+        for c in unique_clusters:
+            pk.append(len(c)/total)
+        return entropy(pk)
+
+
+if __name__ == "__main__":
+    """Testing"""
+    agents = np.random.random(size=[3,2]) # three agents, two classification dimensions
+    h = HSEMetric(None)
+    for i in range(11):
+        ret = h.clustering(agents, i*0.1)
+        print(ret)
+        ret = h.social_entropy(ret)
+        print(ret)
