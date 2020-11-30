@@ -13,7 +13,7 @@ from policy_follow_leader import Policy_Follow_Leader
 from policy_random import Policy_Random
 from policy_random_network2 import Policy_Random_Network2
 
-from metric import Metric, MicroEntropyMetric, MacroEntropyMetric
+from metric import Metric, MicroEntropyMetric, MacroEntropyMetric, MacroMicroEntropyMetric
 from metric_hse import HSEMetric
 
 import utils
@@ -32,6 +32,7 @@ Metric_classes = {
     "Metric": Metric,
     "Micro_Entropy": MicroEntropyMetric,
     "Macro_Entropy": MacroEntropyMetric,
+    "Macro_Micro_Entropy": MacroMicroEntropyMetric,
     "HSE": HSEMetric,
 }
 
@@ -74,7 +75,7 @@ class Simulation(threading.Thread):
             # set g_obs for visualization
             g_obs = g_world.get_absolute_obs()
             if not args.blind:
-                time.sleep(0.01)
+                time.sleep(0.0001)
 
 
 # P5 interface
@@ -149,26 +150,31 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--metric-class", type=str, default="Metric", help="The name of the metric class you want to use. Choices: %s"%
                                                                                                                 (', '.join(Metric_classes.keys())))
     parser.add_argument("-b", "--blind",  action='store_true')
+    parser.add_argument("-s", "--steps", type=int, default=1000)
+
     args = parser.parse_args()
-    g_obs = None
-    g_world = None
-    g_metrics = None
-    g_metrics_val = [0., 0.]
-    g_last_step = 0
-    metric_history = None
-    print("Press Ctrl+C twice to quit...")
-    # Start Simulation Thread
-    sim = Simulation()
-    sim.max_steps = 1000 if args.blind else -1
-    sim.start()
-    
-    if not args.blind:
-        run()
-        # Start to draw using p5
-    else:
-        sim.join()
+    for p in Policy_classes.keys():
+        args.policy_class = p
+        g_obs = None
+        g_world = None
+        g_metrics = None
+        g_metrics_val = [0., 0.]
+        g_last_step = 0
+        metric_history = None
+        print("Press Ctrl+C twice to quit...")
+        # Start Simulation Thread
+        sim = Simulation()
+        sim.max_steps = args.steps
+        sim.start()
+        
+        if not args.blind:
+            run()
+            # Start to draw using p5
+        else:
+            sim.join()
         if metric_history is not None:  
             plt.plot(metric_history[:, 0], label="Micro Entropy")
             plt.plot(metric_history[:, 1], label="Macro Entropy")
             plt.legend()
-            plt.show()
+            plt.ylim((0,1))
+            plt.savefig("%s_%d_steps_%d.pdf"%(args.policy_class, args.steps, int(time.time())))
