@@ -67,7 +67,8 @@ class MacroEntropyMetric(EntropyMetric):
         self.update_history()
 
         if (self.world_history.shape[1] != 0):
-            world_pos_history = (self.world_history[:, :, :2] * self.grid_size).astype(np.int)
+            # world_pos_history = (self.world_history[:, :, :2] * self.grid_size).astype(np.int)
+            world_pos_history = stats.rankdata(self.world_history[:, :, :2], axis=1) # compute the position rank tuple for each vehicle at each timestep.
             vals, counts = np.unique(world_pos_history, return_counts=True, axis=0) # val counts of pos x.
             entropy = calc_entropy(counts)
             return entropy / (np.log2( 1/self.history_len)* -1) # normalize to 0 to 1.
@@ -86,8 +87,12 @@ class MacroMicroEntropyMetric(EntropyMetric):
         macro_entropy = 0
         micro_entropy = 0
         if (self.world_history.shape[1] != 0):
-            world_pos_history = (self.world_history[:, :, :2] * self.grid_size).astype(np.int)
+            # world_pos_history = (self.world_history[:, :, :2] * self.grid_size).astype(np.int)
+            world_pos_history = stats.rankdata(self.world_history[:, :, :2], axis=1) # compute the position rank tuple for each vehicle at each timestep.
+            # print(world_pos_history[:10, :, 0])
+            # print(world_pos_history[:10, :, 1])
             vals, counts = np.unique(world_pos_history, return_counts=True, axis=0) # val counts of pos x.
+            # print(counts)
             macro_entropy = calc_entropy(counts)
             macro_entropy /= (np.log2( 1/self.history_len)* -1) # normalize to 0 to 1.
 
@@ -95,12 +100,12 @@ class MacroMicroEntropyMetric(EntropyMetric):
         total_micro_entropy = 0
         for v_id in range(self.world_history.shape[1]):
             # save and bin to ints.
-            row_history = (self.world_history[:, v_id] * self.grid_size).astype(np.int)
+            row_history = (self.world_history[:, v_id, 2:] * self.grid_size).astype(np.int)
             vals, counts = np.unique(row_history, return_counts=True, axis=0) # val counts of state history of one particle
             curr_entropy = calc_entropy(counts)
             curr_entropy /= (np.log2( 1/self.history_len)* -1) # normalize to 0 to 1
             total_micro_entropy += curr_entropy
         micro_entropy =  total_micro_entropy / self.world_history.shape[1] # normalize to 0 to 1
 
-        print("micro: %.2f, macro: %.2f"%(micro_entropy, macro_entropy))
-        return micro_entropy - macro_entropy
+        # print("micro: %.2f, macro: %.2f"%(micro_entropy, macro_entropy))
+        return micro_entropy, macro_entropy
