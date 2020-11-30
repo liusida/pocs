@@ -4,6 +4,7 @@ import threading
 import argparse
 import numpy as np
 from p5 import *  # pip install p5
+import matplotlib.pyplot as plt
 
 from policy import Policy
 from policy_boids_vanilla import Policy_Boids_Vanilla
@@ -34,9 +35,15 @@ Metric_classes = {
     "HSE": HSEMetric,
 }
 
+def sequence(max_element):
+    num = 0
+    while max_element < 0 or num < max_element :
+        yield num
+        num += 1
+
 class Simulation(threading.Thread):
     def run(self):
-        global g_obs, g_world, g_metrics, g_metrics_val
+        global g_obs, g_world, g_metrics, g_metrics_val, metric_history
         g_world = World(seed=0)
         g_world.init_vehicles(args.num_vehicles)
 
@@ -46,19 +53,28 @@ class Simulation(threading.Thread):
 
         obs = g_world.reset()
 
-        while True:
+        metric_history = None
+        if (self.max_steps > 0):
+            metric_history = np.zeros(shape=(self.max_steps, 2))
+
+        for step_id in sequence(self.max_steps):
             action = g_policy.get_action(obs)
             obs, info = g_world.step(action)
             ret = g_metrics.get_metric()
+            if args.blind:
+                print(ret, g_world.time_step)
             if isinstance(ret, numbers.Number):
                 g_metrics_val[0] = ret # no extra info returned.
                 g_metrics_val[1] = 0
             else:
                 g_metrics_val[0] = ret[0]
                 g_metrics_val[1] = ret[1]
+            if metric_history is not None:
+                metric_history[step_id, :] = g_metrics_val
             # set g_obs for visualization
             g_obs = g_world.get_absolute_obs()
-            time.sleep(0.01)
+            if not args.blind:
+                time.sleep(0.01)
 
 
 # P5 interface
@@ -128,17 +144,31 @@ def draw_vehicle(pos_x, pos_y, angle, vehicle_id):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--num-vehicles", type=int, default=10, help="Number of vehicles")
-    parser.add_argument("-p", "--policy-class", type=str, default="Policy", help="The name of the policy class you want to use.")
-    parser.add_argument("-m", "--metric-class", type=str, default="Metric", help="The name of the metric class you want to use.")
+    parser.add_argument("-p", "--policy-class", type=str, default="Policy", help="The name of the policy class you want to use. Choices: %s"%
+                                                                                                                (', '.join(Policy_classes.keys())))
+    parser.add_argument("-m", "--metric-class", type=str, default="Metric", help="The name of the metric class you want to use. Choices: %s"%
+                                                                                                                (', '.join(Metric_classes.keys())))
+    parser.add_argument("-b", "--blind",  action='store_true')
     args = parser.parse_args()
     g_obs = None
     g_world = None
     g_metrics = None
     g_metrics_val = [0., 0.]
     g_last_step = 0
+    metric_history = None
     print("Press Ctrl+C twice to quit...")
     # Start Simulation Thread
     sim = Simulation()
+    sim.max_steps = 1000 if args.blind else -1
     sim.start()
-    # Start to draw using p5
-    run()
+    
+    if not args.blind:
+        run()
+        # Start to draw using p5
+    else:
+        sim.join()
+        if metric_history is not None:  
+            plt.plot(metric_history[:, 0], label="Micro Entropy")
+            plt.plot(metric_history[:, 1], label="Macro Entropy")
+            plt.legend()
+            plt.show()
