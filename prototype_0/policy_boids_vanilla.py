@@ -47,20 +47,38 @@ class Policy_Boids_Vanilla(Policy):
                 align_request = self.alignment(neigh, i, curr_x, curr_y)
                 cohere_request = self.cohesion(neigh, i, curr_x, curr_y)
                 
+                # I don't know why method A and B produce very different values for steering. But by printing them out so we can see which method we are using.
+                # You can remove them once the agents are stable.
                 if separate_request is not None:
                     action[i,0] = np.mean([0.25*align_request, 0.25*cohere_request[0], 0.5*separate_request[0]]) - current_angle
+                    if i==0:
+                        print(f"A {action[i,0]:.03f} current_angle {current_angle:.03f}")
                     action[i,1] = np.mean([separate_request[1], cohere_request[1]]) * 5
                 else:
                     action[i,0] = np.mean([align_request, cohere_request[0]]) - current_angle
+                    if i==0:
+                        print(f"B {action[i,0]:.03f} current_angle {current_angle:.03f}")
                     action[i,1] = cohere_request[1]
 
             else:  # continue in same direction/with same speed
                 action[i,0] = 0
+                if i==0:
+                    print(f"C {action[i,0]:.03f} current_angle {current_angle:.03f}")
                 action[i,1] = current_velocity
 
         return action
 
-    def find_nearest_neighbors(self, obs, vehicle):
+    # you could use this distance function in find_nearest_neighbors() to calculate the distance of two point, it covers the edge case.
+    # I copied from metric_hse.py
+    def distance(self, point1, point2):
+        d = np.abs(point1 - point2)
+        if d[0]>0.5:
+            d[0] = 1-d[0]
+        if d[1]>0.5:
+            d[1] = 1-d[1]
+        return np.sqrt(d[0]*d[0] + d[1]*d[1])
+
+    def find_nearest_neighbors(self, obs, vehicle): 
         '''
         returns matrix of nearest neighbors of vehicle within self.neighborhood_dist
             neigh = (# neighbors x 4)
@@ -108,6 +126,7 @@ class Policy_Boids_Vanilla(Policy):
             target_speed = np.linalg.norm([x_vec,y_vec])
 
             return target_angle, target_speed
+        return None
 
     def alignment(self, neigh, vehicle, curr_x, curr_y):
         # align direction with nearest neighbors
