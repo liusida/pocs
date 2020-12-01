@@ -18,7 +18,13 @@ from metric import Metric
 
 class HSEMetric(Metric):
     def distance(self, point1, point2):
-        return np.linalg.norm(point1 - point2)
+        d = np.abs(point1 - point2)
+        if d[0]>0.5:
+            d[0] = 1-d[0]
+        if d[1]>0.5:
+            d[1] = 1-d[1]
+        return np.sqrt(d[0]*d[0] + d[1]*d[1])
+        # return np.linalg.norm(point1 - point2)
 
     def clustering(self, data, h):
         """Implementation of Cu algorithm for clustering at level h
@@ -63,6 +69,22 @@ class HSEMetric(Metric):
             pk.append(len(c)/total)
         return entropy(pk)
 
+    def get_metric(self):
+        # integrate h from 0.0 to 1.0
+        HSE = 0
+        num_hs = 20 # discretize h
+        hs = np.linspace(0., 1., num=num_hs)
+        agents = self.world.current_obs[0]
+        agents = agents.reshape([10,4])
+        agents = agents[:,:2]
+        for h in hs:
+            clusters = self.clustering(agents, h)
+            # print(clusters)
+            entropy = self.social_entropy(clusters)
+            HSE += entropy
+        HSE /= num_hs
+        # print(HSE)
+        return HSE
 
 if __name__ == "__main__":
     """Testing"""
