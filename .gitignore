@@ -2,6 +2,8 @@ tmp
 profile
 profiler
 *.pickle
+*.pdf
+*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

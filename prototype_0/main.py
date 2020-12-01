@@ -172,9 +172,13 @@ if __name__ == "__main__":
             # Start to draw using p5
         else:
             sim.join()
-        if metric_history is not None:  
-            plt.plot(metric_history[:, 0], label="Micro Entropy")
-            plt.plot(metric_history[:, 1], label="Macro Entropy")
-            plt.legend()
-            plt.ylim((0,1))
-            plt.savefig("%s_%d_steps_%d.pdf"%(args.policy_class, args.steps, int(time.time())))
+        if metric_history is not None:
+            if args.metric_class=="HSE":
+                plt.plot(metric_history[:, 0], label=f"{p}")
+            else:
+                plt.plot(metric_history[:, 0], label=f"{p} Micro")
+                plt.plot(metric_history[:, 1], label=f"{p} Macro")
+    plt.legend()
+    plt.ylim((0,1))
+    plt.savefig("%s_%s_%d_steps_%d.pdf"%(args.metric_class, args.policy_class, args.steps, int(time.time())))
+    plt.savefig("%s_%s_%d_steps_%d.png"%(args.metric_class, args.policy_class, args.steps, int(time.time())))
