@@ -43,6 +43,8 @@ def sequence(max_element):
         num += 1
 
 class Simulation(threading.Thread):
+    save_history = False
+    max_steps = -1
     def run(self):
         global g_obs, g_world, g_metrics, g_metrics_val, metric_history
         g_world = World(seed=0)
@@ -53,10 +55,11 @@ class Simulation(threading.Thread):
         g_policy = Policy_classes[args.policy_class](world=g_world, dim_obs=g_world.dim_obs, dim_action=g_world.dim_action)
 
         obs = g_world.reset()
-
+        
         metric_history = None
-        if (self.max_steps > 0):
-            metric_history = np.zeros(shape=(self.max_steps, 2))
+        if self.save_history:
+            if (self.max_steps > 0):
+                metric_history = np.zeros(shape=(self.max_steps, 2))
 
         for step_id in sequence(self.max_steps):
             action = g_policy.get_action(obs)
@@ -70,8 +73,9 @@ class Simulation(threading.Thread):
             else:
                 g_metrics_val[0] = ret[0]
                 g_metrics_val[1] = ret[1]
-            if metric_history is not None:
-                metric_history[step_id, :] = g_metrics_val
+            if self.save_history:
+                if metric_history is not None:
+                    metric_history[step_id, :] = g_metrics_val
             # set g_obs for visualization
             g_obs = g_world.get_absolute_obs()
             if not args.blind:
@@ -152,9 +156,37 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--blind",  action='store_true')
     parser.add_argument("-s", "--steps", type=int, default=1000)
 
+    parser.add_argument("--report", action="store_true")
+
     args = parser.parse_args()
-    for p in Policy_classes.keys():
-        args.policy_class = p
+
+    if args.report:
+        for p in Policy_classes.keys():
+            args.policy_class = p
+            g_obs = None
+            g_world = None
+            g_metrics = None
+            g_metrics_val = [0., 0.]
+            g_last_step = 0
+            metric_history = None
+            print(f"Simulating {p}...")
+            # Start Simulation Thread
+            sim = Simulation()
+            sim.max_steps = args.steps
+            sim.save_history = True
+            sim.start()
+            sim.join()
+            if metric_history is not None:
+                if args.metric_class=="HSE":
+                    plt.plot(metric_history[:, 0], label=f"{p}")
+                else:
+                    plt.plot(metric_history[:, 0], label=f"{p} Micro")
+                    plt.plot(metric_history[:, 1], label=f"{p} Macro")
+        plt.legend()
+        plt.ylim((0,1))
+        plt.savefig("%s_%s_%d_steps_%d.pdf"%(args.metric_class, args.policy_class, args.steps, int(time.time())))
+        plt.savefig("%s_%s_%d_steps_%d.png"%(args.metric_class, args.policy_class, args.steps, int(time.time())))
+    else:
         g_obs = None
         g_world = None
         g_metrics = None
@@ -164,21 +196,9 @@ if __name__ == "__main__":
         print("Press Ctrl+C twice to quit...")
         # Start Simulation Thread
         sim = Simulation()
-        sim.max_steps = args.steps
         sim.start()
-        
         if not args.blind:
             run()
             # Start to draw using p5
         else:
             sim.join()
-        if metric_history is not None:
-            if args.metric_class=="HSE":
-                plt.plot(metric_history[:, 0], label=f"{p}")
-            else:
-                plt.plot(metric_history[:, 0], label=f"{p} Micro")
-                plt.plot(metric_history[:, 1], label=f"{p} Macro")
-    plt.legend()
-    plt.ylim((0,1))
-    plt.savefig("%s_%s_%d_steps_%d.pdf"%(args.metric_class, args.policy_class, args.steps, int(time.time())))
-    plt.savefig("%s_%s_%d_steps_%d.png"%(args.metric_class, args.policy_class, args.steps, int(time.time())))
