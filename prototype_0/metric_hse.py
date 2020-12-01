@@ -75,7 +75,7 @@ class HSEMetric(Metric):
         num_hs = 20 # discretize h
         hs = np.linspace(0., 1., num=num_hs)
         agents = self.world.current_obs[0]
-        agents = agents.reshape([10,4])
+        agents = agents.reshape([self.world.num_vehicles,4])
         agents = agents[:,:2]
         for h in hs:
             clusters = self.clustering(agents, h)
