@@ -9,6 +9,7 @@ import tqdm
 
 from policy import Policy
 from policy_simplified_boids import Policy_Simplified_Boids
+from policy_boids import Policy_Boids
 from policy_random_network import Policy_Random_Network
 from policy_follow_leader import Policy_Follow_Leader
 from policy_random import Policy_Random
@@ -26,7 +27,8 @@ Policy_classes = {
     "Policy_Follow_Leader": Policy_Follow_Leader,
     "Policy_Random": Policy_Random,
     "Policy_Random_Network2": Policy_Random_Network2,
-    "Policy_Simplified_Boids": Policy_Simplified_Boids
+    "Policy_Simplified_Boids": Policy_Simplified_Boids,
+    "Policy_Boids": Policy_Boids
 }
 
 Metric_classes = {
