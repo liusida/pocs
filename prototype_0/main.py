@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 from p5 import *  # pip install p5
 import matplotlib.pyplot as plt
+import tqdm
 
 from policy import Policy
 from policy_boids_vanilla import Policy_Boids_Vanilla
@@ -59,7 +60,7 @@ class Simulation(threading.Thread):
         
         metric_history = dict()
 
-        for step_id in sequence(self.max_steps):
+        for step_id in tqdm.tqdm(sequence(self.max_steps)):
             action = g_policy.get_action(obs)
             obs, info = g_world.step(action)
             ret = g_metrics.get_metric()
