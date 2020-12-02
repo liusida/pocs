@@ -15,7 +15,7 @@ from policy_follow_leader import Policy_Follow_Leader
 from policy_random import Policy_Random
 from policy_random_network2 import Policy_Random_Network2
 
-from metric import Metric, MicroEntropyMetric, MacroEntropyMetric, MacroMicroEntropyMetric
+from metric import Metric, MicroEntropyMetric, MacroEntropyMetric, MacroMicroEntropyMetric, PredictiveInformationMetric
 from metric_hse import HSEMetric
 from metric_mi import MutualInfoMetric
 
@@ -35,10 +35,15 @@ Policy_classes = {
 Metric_classes = {
     "Metric": Metric,
     "Micro_Entropy": MicroEntropyMetric,
+    "Micro": MicroEntropyMetric,
     "Macro_Entropy": MacroEntropyMetric,
+    "Macro": MacroEntropyMetric,
     "Macro_Micro_Entropy": MacroMicroEntropyMetric,
+    "Macro_Micro": MacroMicroEntropyMetric,
     "HSE": HSEMetric,
-    "MI": MutualInfoMetric
+    "MI": MutualInfoMetric,
+    "PredictiveInformationMetric":PredictiveInformationMetric,
+    "PI": PredictiveInformationMetric,
 }
 
 def sequence(max_element):

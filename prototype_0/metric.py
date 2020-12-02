@@ -1,5 +1,6 @@
 import numpy as np
 from  scipy import stats
+import pyinform as pyin
 
 def calc_entropy(pk):
     if pk is None:
@@ -20,6 +21,7 @@ class EntropyMetric:
         self.history_len = kwargs["history_len"] if "history_len" in kwargs else 100
         self.world_history = np.zeros(shape=(self.history_len, len(self.world.vehicles), 4))
         self.history_idx = 0
+
     def update_history(self):
         # update the history information.
         if self.world_history.shape[1] != len(self.world.vehicles):
@@ -109,5 +111,49 @@ class MacroMicroEntropyMetric(EntropyMetric):
 
         # print("micro: %.2f, macro: %.2f"%(micro_entropy, macro_entropy))
         return {"Micro": micro_entropy,
-                "Macro":macro_entropy,
+                "Macro": macro_entropy,
                 "Micro - Macro": micro_entropy - macro_entropy}
+
+def get_world_wrapped(world, a, b):
+    print(a, b)
+    if a < 0:
+        a = world.shape[0] + a 
+    if b < 0:
+        b = world.shape[0] + b
+    print(a, b)
+    if  b >= a:
+        return world[a:b]
+    else:
+        a_arr = world[a:]
+        b_arr = world[:b]
+        print("a_arr", a_arr.shape)
+        print("b_arr", b_arr.shape)
+        return np.vstack([a_arr, b_arr])
+
+class PredictiveInformationMetric(EntropyMetric):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.local_history_len = kwargs["local_history_len"] if "local_history_len" in kwargs else int(1/3 * self.history_len)
+        self.gap_history_len = kwargs["gap_history_len"] if "gap_history_len" in kwargs else int(1/3 * self.history_len)
+
+    def get_metric(self):
+        self.update_history()
+        if (self.world_history.shape[1] != 0):
+            
+            prev_sub_world = get_world_wrapped(self.world_history, self.history_idx - self.local_history_len - self.gap_history_len, self.history_idx  - self.gap_history_len)
+            curr_sub_world = get_world_wrapped(self.world_history, self.history_idx - self.local_history_len, self.history_idx)
+            print(prev_sub_world.shape, self.history_idx - self.local_history_len - self.gap_history_len, self.history_idx  - self.gap_history_len)
+            print(curr_sub_world.shape, self.history_idx - self.local_history_len, self.history_idx)
+
+            prev_world_pos_history = stats.rankdata( prev_sub_world[:, :, :2], axis=1) # compute the position rank tuple for each vehicle at each timestep.
+            curr_world_pos_history = stats.rankdata( curr_sub_world[:, :, :2], axis=1) # compute the position rank tuple for each vehicle at each timestep.
+            
+            prev_vals, prev_counts = np.unique(prev_world_pos_history, return_counts=True, axis=0) # val counts of pos x.
+            curr_vals, curr_counts = np.unique(curr_world_pos_history, return_counts=True, axis=0) # val counts of pos x.
+            print(prev_counts, curr_counts)
+            entropy = pyin.mutual_info(curr_counts, prev_counts)
+            return  {"Predictive Macro Entropy":entropy / (np.log2( 1/self.history_len)* -1)} # normalize to 0 to 1.
+        else:
+            return {"Predictive Macro Entropy":0}
+
+        
