@@ -108,6 +108,6 @@ class MacroMicroEntropyMetric(EntropyMetric):
         micro_entropy =  total_micro_entropy / self.world_history.shape[1] # normalize to 0 to 1
 
         # print("micro: %.2f, macro: %.2f"%(micro_entropy, macro_entropy))
-        return {"Micro Entropy": micro_entropy,
-                "Macro Entropy":macro_entropy,
-                "Micro - Macro Entropy": micro_entropy - macro_entropy}
+        return {"Micro": micro_entropy,
+                "Macro":macro_entropy,
+                "Micro - Macro": micro_entropy - macro_entropy}

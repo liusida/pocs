@@ -162,7 +162,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.report:
-        for p in Policy_classes.keys():
+        fig, ax = plt.subplots(figsize=(4*4, 3*4*2))
+        for policy_idx, p in enumerate(Policy_classes.keys()):
             args.policy_class = p
             g_obs = None
             g_world = None
@@ -178,10 +179,16 @@ if __name__ == "__main__":
             sim.start()
             sim.join()
             if metric_history is not None:
-                for key, val in metric_history.items():
-                    plt.plot(metric_history[key][:], label=f"{p} {key}")
-        plt.legend()
-        plt.ylim((0,1))
+                ignore_list = [] #["Micro - Macro"]
+                line_styles = ["solid", "dashed", "dotted", "dashdot"]
+                for metric_idx, (key, val) in enumerate(metric_history.items()):
+                    if key in ignore_list:
+                        continue
+                    ax.plot(metric_history[key][:], label=f"{p} ({key})", linestyle=line_styles[metric_idx], c="C%d"%(policy_idx), linewidth=3)
+                # key = "Micro - Macro Entropy"
+                # plt.plot(metric_history[key][:], label=f"{p} {key}")
+        ax.legend()
+        ax.set_ylim((-1,1))
         plt.savefig("%s_%d_steps_%d.pdf"%(args.metric_class, args.steps, int(time.time())))
         plt.savefig("%s_%d_steps_%d.png"%(args.metric_class, args.steps, int(time.time())))
     else:
