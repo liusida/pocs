@@ -17,6 +17,7 @@ from policy_random_network2 import Policy_Random_Network2
 
 from metric import Metric, MicroEntropyMetric, MacroEntropyMetric, MacroMicroEntropyMetric
 from metric_hse import HSEMetric
+from metric_mi import MutualInfoMetric
 
 import utils
 from world import World
@@ -37,6 +38,7 @@ Metric_classes = {
     "Macro_Entropy": MacroEntropyMetric,
     "Macro_Micro_Entropy": MacroMicroEntropyMetric,
     "HSE": HSEMetric,
+    "MI": MutualInfoMetric
 }
 
 def sequence(max_element):
