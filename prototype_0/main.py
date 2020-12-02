@@ -46,6 +46,7 @@ class Simulation(threading.Thread):
     save_history = False
     max_steps = -1
     def run(self):
+        assert not self.save_history or self.max_steps > 0
         global g_obs, g_world, g_metrics, g_metrics_val, metric_history
         g_world = World(seed=0)
         g_world.init_vehicles(args.num_vehicles)
@@ -56,26 +57,32 @@ class Simulation(threading.Thread):
 
         obs = g_world.reset()
         
-        metric_history = None
-        if self.save_history:
-            if (self.max_steps > 0):
-                metric_history = np.zeros(shape=(self.max_steps, 2))
+        metric_history = dict()
 
         for step_id in sequence(self.max_steps):
             action = g_policy.get_action(obs)
             obs, info = g_world.step(action)
             ret = g_metrics.get_metric()
+            assert isinstance(ret, dict)
+            # save the metrics to the history
+            if step_id == 0 and self.save_history:
+                for key in ret.keys():
+                    metric_history[key] = np.zeros(shape=(self.max_steps))
+
+            g_metrics_val = ret
+
             if args.blind:
                 print(ret, g_world.time_step)
-            if isinstance(ret, numbers.Number):
-                g_metrics_val[0] = ret # no extra info returned.
-                g_metrics_val[1] = 0
-            else:
-                g_metrics_val[0] = ret[0]
-                g_metrics_val[1] = ret[1]
+            # if isinstance(ret, numbers.Number):
+            #     g_metrics_val[0] = ret # no extra info returned.
+            #     g_metrics_val[1] = 0
+            # else:
+            #     g_metrics_val[0] = ret[0]
+            #     g_metrics_val[1] = ret[1]
             if self.save_history:
-                if metric_history is not None:
-                    metric_history[step_id, :] = g_metrics_val
+                for key, val in ret.items():
+                    metric_history[key][step_id] = val
+
             # set g_obs for visualization
             g_obs = g_world.get_absolute_obs()
             if not args.blind:
@@ -113,10 +120,11 @@ def draw_info():
         line = 0
         text(f"Time Step: {g_world.time_step}", 0, line*15)
         line += 1
-        text(f"{args.metric_class}: {g_metrics_val[0]:.03f}", 0, line*15)
-        line += 1
-        text(f"counts: {g_metrics_val[1]}", 0, line*15)
-        line += 1
+        for key, val in g_metrics_val.items():
+            text(f"{key}: {val:.03f}", 0, line*15)
+            line += 1
+        # text(f"counts: {g_metrics_val[1]}", 0, line*15)
+        # line += 1
         text(f"Step per frame: {step_per_frame}", 0, line*15)
 
 def draw_vehicle(pos_x, pos_y, angle, vehicle_id):
@@ -166,7 +174,7 @@ if __name__ == "__main__":
             g_obs = None
             g_world = None
             g_metrics = None
-            g_metrics_val = [0., 0.]
+            g_metrics_val = dict()
             g_last_step = 0
             metric_history = None
             print(f"Simulating {p}...")
@@ -177,11 +185,13 @@ if __name__ == "__main__":
             sim.start()
             sim.join()
             if metric_history is not None:
-                if args.metric_class=="HSE":
-                    plt.plot(metric_history[:, 0], label=f"{p}")
-                else:
-                    plt.plot(metric_history[:, 0], label=f"{p} Micro")
-                    plt.plot(metric_history[:, 1], label=f"{p} Macro")
+                for key, val in metric_history.items():
+                    plt.plot(metric_history[key][:], label=f"{p} {key}")
+
+                # if args.metric_class=="HSE":
+                # else:
+                #     plt.plot(metric_history[:, 0], label=f"{p} Micro")
+                #     plt.plot(metric_history[:, 1], label=f"{p} Macro")
         plt.legend()
         plt.ylim((0,1))
         plt.savefig("%s_%s_%d_steps_%d.pdf"%(args.metric_class, args.policy_class, args.steps, int(time.time())))
@@ -190,7 +200,7 @@ if __name__ == "__main__":
         g_obs = None
         g_world = None
         g_metrics = None
-        g_metrics_val = [0., 0.]
+        g_metrics_val = dict()
         g_last_step = 0
         metric_history = None
         print("Press Ctrl+C twice to quit...")

@@ -84,7 +84,7 @@ class HSEMetric(Metric):
             HSE += entropy
         HSE /= num_hs
         # print(HSE)
-        return HSE
+        return {"HSE":HSE}
 
 if __name__ == "__main__":
     """Testing"""

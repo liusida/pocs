@@ -11,7 +11,7 @@ class Metric:
         self.world = world
         
     def get_metric(self):
-        return self.world.vehicles[0].pos_x  # TODO: for demostration. Should be entropy or something.
+        return {"pos": self.world.vehicles[0].pos_x}  # TODO: for demostration. Should be entropy or something.
 
 class EntropyMetric:
     def __init__(self, world, **kwargs):
@@ -56,7 +56,7 @@ class MicroEntropyMetric(EntropyMetric):
             curr_entropy = calc_entropy(counts)
             curr_entropy /= (np.log2( 1/self.history_len)* -1) # normalize to 0 to 1
             total_micro_entropy += curr_entropy
-        return total_micro_entropy / self.world_history.shape[1] # normalize to 0 to 1
+        return {"Micro Entropy": total_micro_entropy / self.world_history.shape[1]} # normalize to 0 to 1
 
 class MacroEntropyMetric(EntropyMetric):
     def __init__(self, *args, **kwargs):
@@ -71,9 +71,9 @@ class MacroEntropyMetric(EntropyMetric):
             world_pos_history = stats.rankdata(self.world_history[:, :, :2], axis=1) # compute the position rank tuple for each vehicle at each timestep.
             vals, counts = np.unique(world_pos_history, return_counts=True, axis=0) # val counts of pos x.
             entropy = calc_entropy(counts)
-            return entropy / (np.log2( 1/self.history_len)* -1) # normalize to 0 to 1.
+            return  {"Macro Entropy":entropy / (np.log2( 1/self.history_len)* -1)} # normalize to 0 to 1.
         else:
-            return 0
+            return {"Macro Entropy":0}
 
 
 class MacroMicroEntropyMetric(EntropyMetric):
@@ -108,4 +108,6 @@ class MacroMicroEntropyMetric(EntropyMetric):
         micro_entropy =  total_micro_entropy / self.world_history.shape[1] # normalize to 0 to 1
 
         # print("micro: %.2f, macro: %.2f"%(micro_entropy, macro_entropy))
-        return micro_entropy, macro_entropy
+        return {"Micro Entropy": micro_entropy,
+                "Macro Entropy":macro_entropy,
+                "Micro - Macro Entropy": micro_entropy - macro_entropy}
