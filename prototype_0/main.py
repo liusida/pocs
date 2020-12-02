@@ -195,8 +195,8 @@ if __name__ == "__main__":
                 #     plt.plot(metric_history[:, 1], label=f"{p} Macro")
         plt.legend()
         plt.ylim((0,1))
-        plt.savefig("%s_%s_%d_steps_%d.pdf"%(args.metric_class, args.policy_class, args.steps, int(time.time())))
-        plt.savefig("%s_%s_%d_steps_%d.png"%(args.metric_class, args.policy_class, args.steps, int(time.time())))
+        plt.savefig("%s_%d_steps_%d.pdf"%(args.metric_class, args.steps, int(time.time())))
+        plt.savefig("%s_%d_steps_%d.png"%(args.metric_class, args.steps, int(time.time())))
     else:
         g_obs = None
         g_world = None
