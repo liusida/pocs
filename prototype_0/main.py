@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import tqdm
 
 from policy import Policy
-from policy_boids_vanilla import Policy_Boids_Vanilla
+from policy_simplified_boids import Policy_Simplified_Boids
+from policy_boids import Policy_Boids
 from policy_random_network import Policy_Random_Network
 from policy_follow_leader import Policy_Follow_Leader
 from policy_random import Policy_Random
@@ -16,17 +17,19 @@ from policy_random_network2 import Policy_Random_Network2
 
 from metric import Metric, MicroEntropyMetric, MacroEntropyMetric, MacroMicroEntropyMetric
 from metric_hse import HSEMetric
+from metric_mi import MutualInfoMetric
 
 import utils
 from world import World
 
 Policy_classes = {
     "Policy": Policy,
-    "Policy_Boids_Vanilla": Policy_Boids_Vanilla,
     "Policy_Random_Network": Policy_Random_Network,
     "Policy_Follow_Leader": Policy_Follow_Leader,
     "Policy_Random": Policy_Random,
-    "Policy_Random_Network2": Policy_Random_Network2
+    "Policy_Random_Network2": Policy_Random_Network2,
+    "Policy_Simplified_Boids": Policy_Simplified_Boids,
+    "Policy_Boids": Policy_Boids
 }
 
 Metric_classes = {
@@ -35,6 +38,7 @@ Metric_classes = {
     "Macro_Entropy": MacroEntropyMetric,
     "Macro_Micro_Entropy": MacroMicroEntropyMetric,
     "HSE": HSEMetric,
+    "MI": MutualInfoMetric
 }
 
 def sequence(max_element):
