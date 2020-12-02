@@ -1,6 +1,7 @@
 import numpy as np
 from  scipy import stats
 import pyinform as pyin
+from sklearn.metrics import mutual_info_score
 
 def calc_entropy(pk):
     if pk is None:
@@ -115,19 +116,19 @@ class MacroMicroEntropyMetric(EntropyMetric):
                 "Micro - Macro": micro_entropy - macro_entropy}
 
 def get_world_wrapped(world, a, b):
-    print(a, b)
+    # print(a, b)
     if a < 0:
         a = world.shape[0] + a 
     if b < 0:
         b = world.shape[0] + b
-    print(a, b)
+    # print(a, b)
     if  b >= a:
         return world[a:b]
     else:
         a_arr = world[a:]
         b_arr = world[:b]
-        print("a_arr", a_arr.shape)
-        print("b_arr", b_arr.shape)
+        # print("a_arr", a_arr.shape)
+        # print("b_arr", b_arr.shape)
         return np.vstack([a_arr, b_arr])
 
 class PredictiveInformationMetric(EntropyMetric):
@@ -135,25 +136,35 @@ class PredictiveInformationMetric(EntropyMetric):
         super().__init__(*args, **kwargs)
         self.local_history_len = kwargs["local_history_len"] if "local_history_len" in kwargs else int(1/3 * self.history_len)
         self.gap_history_len = kwargs["gap_history_len"] if "gap_history_len" in kwargs else int(1/3 * self.history_len)
+        self.grid_size= kwargs["grid_size"] if "grid_size" in kwargs else 1000
 
     def get_metric(self):
         self.update_history()
         if (self.world_history.shape[1] != 0):
             
-            prev_sub_world = get_world_wrapped(self.world_history, self.history_idx - self.local_history_len - self.gap_history_len, self.history_idx  - self.gap_history_len)
-            curr_sub_world = get_world_wrapped(self.world_history, self.history_idx - self.local_history_len, self.history_idx)
-            print(prev_sub_world.shape, self.history_idx - self.local_history_len - self.gap_history_len, self.history_idx  - self.gap_history_len)
-            print(curr_sub_world.shape, self.history_idx - self.local_history_len, self.history_idx)
+            total_pi_ang =  0
+            total_pi_x =  0
 
-            prev_world_pos_history = stats.rankdata( prev_sub_world[:, :, :2], axis=1) # compute the position rank tuple for each vehicle at each timestep.
-            curr_world_pos_history = stats.rankdata( curr_sub_world[:, :, :2], axis=1) # compute the position rank tuple for each vehicle at each timestep.
+            for v_id in range(self.world_history.shape[1]):
+                prev_sub_world = get_world_wrapped(self.world_history, self.history_idx - self.local_history_len - self.gap_history_len, self.history_idx  - self.gap_history_len)
+                curr_sub_world = get_world_wrapped(self.world_history, self.history_idx - self.local_history_len, self.history_idx)
+
+                prev_history_angle = (prev_sub_world[:, v_id, 3] * self.grid_size).astype(np.int).flatten()
+                curr_history_angle = (curr_sub_world[:, v_id, 3] * self.grid_size).astype(np.int).flatten()
+
+                prev_history_x = (prev_sub_world[:, v_id, 0] * self.grid_size).astype(np.int).flatten()
+                curr_history_x = (curr_sub_world[:, v_id, 0] * self.grid_size).astype(np.int).flatten()
             
-            prev_vals, prev_counts = np.unique(prev_world_pos_history, return_counts=True, axis=0) # val counts of pos x.
-            curr_vals, curr_counts = np.unique(curr_world_pos_history, return_counts=True, axis=0) # val counts of pos x.
-            print(prev_counts, curr_counts)
-            entropy = pyin.mutual_info(curr_counts, prev_counts)
-            return  {"Predictive Macro Entropy":entropy / (np.log2( 1/self.history_len)* -1)} # normalize to 0 to 1.
-        else:
-            return {"Predictive Macro Entropy":0}
+                # print(prev_sub_world.shape, self.history_idx - self.local_history_len - self.gap_history_len, self.history_idx  - self.gap_history_len)
+                # print(curr_sub_world.shape, self.history_idx - self.local_history_len, self.history_idx)
 
-        
+                # print(prev_vals, prev_counts)
+                # print(curr_vals, curr_counts)
+                entropy_ang = pyin.mutual_info(prev_history_angle, curr_history_angle)
+                entropy_x = pyin.mutual_info(prev_history_x, curr_history_x)
+                total_pi_ang += entropy_ang/ (np.log2( 1/self.history_len)* -1)
+                total_pi_x += entropy_x/ (np.log2( 1/self.history_len)* -1)
+            return  {"Predictive Micro Entropy Angle": total_pi_ang /self.world_history.shape[1],
+                     "Predictive Micro Entropy X": total_pi_x /self.world_history.shape[1]} # normalize to 0 to 1.
+        else:
+            return {"Predictive Micro Entropy":0}

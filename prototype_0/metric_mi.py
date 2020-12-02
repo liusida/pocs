@@ -11,6 +11,7 @@
 import numpy as np
 import pyinform as pyin
 from  scipy import stats
+from metric import calc_entropy
 
 def relativeEntropy(p, q):
     return sum(p[i] * np.log2(p[i]/q[i]) for i in range(len(p)))
@@ -21,7 +22,7 @@ class MutualInfoMetric:
         self.history_len = kwargs["history_len"] if "history_len" in kwargs else 100
         self.world_history = np.zeros(shape=(self.history_len, len(self.world.vehicles), 4))
         self.history_idx = 0
-        self.grid_size = 100
+        self.grid_size = 10
         
     def update_history(self):
         # update the history information.
@@ -44,20 +45,29 @@ class MutualInfoMetric:
         self.update_history()
         
         total_mi = 0
+        total_mi2 = 0
         for v_id_1 in range(self.world_history.shape[1]):
             for v_id_2 in range(self.world_history.shape[1]):
+                if (v_id_1 == v_id_2):
+                    continue
                 # save and bin to ints.
-                row_history_1 = (self.world_history[:, v_id_1] * self.grid_size).astype(np.int)
+                row_history_1 = (self.world_history[:, v_id_1, 3] * self.grid_size).astype(np.int)
                 #print(row_history_1)
                 #print(len(row_history_1))
-                vals_1, counts_1 = np.unique(row_history_1[:,3], return_counts=True, axis=0) # val counts of state history of one particle
+                # vals_1, counts_1 = np.unique(row_history_1[:,3], return_counts=True, axis=0) # val counts of state history of one particle
                 #print(counts_1)
                 # save and bin to ints.
-                row_history_2 = (self.world_history[:, v_id_2] * self.grid_size).astype(np.int)
-                vals_2, counts_2 = np.unique(row_history_2[:,3], return_counts=True, axis=0) # val counts of state history of one particle
+                row_history_2 = (self.world_history[:, v_id_2, 3] * self.grid_size).astype(np.int)
+                # vals_2, counts_2 = np.unique(row_history_2[:,3], return_counts=True, axis=0) # val counts of state history of one particle
                 
-                curr_mi = pyin.mutual_info(row_history_1, row_history_2)
-                curr_mi /= (np.log2( 1/self.history_len)* -1) # normalize to 0 to 1
+                curr_mi = pyin.mutual_info(row_history_1.flatten(), row_history_2.flatten())
+                # curr_mi /= (np.log2( 1/self.history_len)* -1) # normalize to 0 to 1
+                curr_mi2  = curr_mi + 1e-4
+                curr_mi2 /= (pyin.shannon.entropy(pyin.Dist(row_history_1.flatten())) + 
+                        pyin.shannon.entropy(pyin.Dist(row_history_2.flatten())) +
+                        1e-4)
                 total_mi += curr_mi
+                total_mi2 += curr_mi2
                 
-        return {"Mutual Information": total_mi / (self.world_history.shape[1]**2)} # normalize to 0 to 1
+        return {"Mutual Information": total_mi / (self.world_history.shape[1]**2)} #,
+#                "MI normalized": total_mi2 / (self.world_history.shape[1]**2)} # normalize to 0 to 1

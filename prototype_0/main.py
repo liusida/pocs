@@ -55,13 +55,14 @@ def sequence(max_element):
 class Simulation(threading.Thread):
     save_history = False
     max_steps = -1
+    seed = 0
     def run(self):
         assert not self.save_history or self.max_steps > 0
         global g_obs, g_world, g_metrics, g_metrics_val, metric_history
         g_world = World(seed=0)
         g_world.init_vehicles(args.num_vehicles)
 
-        g_metrics = Metric_classes[args.metric_class](world=g_world)
+        g_metrics = Metric_classes[args.metric_class](world=g_world) # , history_len=300)
 
         g_policy = Policy_classes[args.policy_class](world=g_world, dim_obs=g_world.dim_obs, dim_action=g_world.dim_action)
 
@@ -90,7 +91,7 @@ class Simulation(threading.Thread):
             # set g_obs for visualization
             g_obs = g_world.get_absolute_obs()
             if not args.blind:
-                time.sleep(0.0001)
+                time.sleep(0.01)
 
 
 # P5 interface
@@ -118,6 +119,8 @@ def draw_info():
     global g_last_step
     step_per_frame = g_world.time_step - g_last_step
     g_last_step = g_world.time_step
+    # text_size(32)
+
     text("Origin", 0, g_world.height)
     with push_matrix():
         translate(10, 10)
@@ -165,13 +168,14 @@ if __name__ == "__main__":
                                                                                                                 (', '.join(Metric_classes.keys())))
     parser.add_argument("-b", "--blind",  action='store_true')
     parser.add_argument("-s", "--steps", type=int, default=1000)
+    parser.add_argument("--seed", type=int, default=0)
 
     parser.add_argument("--report", action="store_true")
 
     args = parser.parse_args()
 
     if args.report:
-        fig, ax = plt.subplots(figsize=(4*4, 3*4*2))
+        fig, ax = plt.subplots(figsize=(4*3, 3*3))
         for policy_idx, p in enumerate(Policy_classes.keys()):
             args.policy_class = p
             g_obs = None
@@ -184,6 +188,7 @@ if __name__ == "__main__":
             # Start Simulation Thread
             sim = Simulation()
             sim.max_steps = args.steps
+            sim.seed = args.seed
             sim.save_history = True
             sim.start()
             sim.join()
@@ -197,7 +202,8 @@ if __name__ == "__main__":
                 # key = "Micro - Macro Entropy"
                 # plt.plot(metric_history[key][:], label=f"{p} {key}")
         ax.legend()
-        ax.set_ylim((-1,1))
+        # ax.set_ylim((0,1))
+        plt.show()
         plt.savefig("%s_%d_steps_%d.pdf"%(args.metric_class, args.steps, int(time.time())))
         plt.savefig("%s_%d_steps_%d.png"%(args.metric_class, args.steps, int(time.time())))
     else:

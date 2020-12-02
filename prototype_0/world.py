@@ -46,8 +46,8 @@ class World:
         self.dim_obs = 0
         self.dim_action = 0
 
-        self.width = 1000
-        self.height = 1000
+        self.width = 1920
+        self.height = 1920
         self.vehicles = []
 
     def init_vehicles(self, num):
