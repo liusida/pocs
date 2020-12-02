@@ -74,12 +74,6 @@ class Simulation(threading.Thread):
 
             if args.blind:
                 print(ret, g_world.time_step)
-            # if isinstance(ret, numbers.Number):
-            #     g_metrics_val[0] = ret # no extra info returned.
-            #     g_metrics_val[1] = 0
-            # else:
-            #     g_metrics_val[0] = ret[0]
-            #     g_metrics_val[1] = ret[1]
             if self.save_history:
                 for key, val in ret.items():
                     metric_history[key][step_id] = val
@@ -124,8 +118,6 @@ def draw_info():
         for key, val in g_metrics_val.items():
             text(f"{key}: {val:.03f}", 0, line*15)
             line += 1
-        # text(f"counts: {g_metrics_val[1]}", 0, line*15)
-        # line += 1
         text(f"Step per frame: {step_per_frame}", 0, line*15)
 
 def draw_vehicle(pos_x, pos_y, angle, vehicle_id):
@@ -188,11 +180,6 @@ if __name__ == "__main__":
             if metric_history is not None:
                 for key, val in metric_history.items():
                     plt.plot(metric_history[key][:], label=f"{p} {key}")
-
-                # if args.metric_class=="HSE":
-                # else:
-                #     plt.plot(metric_history[:, 0], label=f"{p} Micro")
-                #     plt.plot(metric_history[:, 1], label=f"{p} Macro")
         plt.legend()
         plt.ylim((0,1))
         plt.savefig("%s_%d_steps_%d.pdf"%(args.metric_class, args.steps, int(time.time())))
