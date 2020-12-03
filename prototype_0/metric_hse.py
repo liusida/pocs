@@ -11,7 +11,7 @@
 # Limitation: can't tell how differet the states are. e.g. a rat and a mouse, v.s. a worm and a elephant.
 
 # Numerical Taxonomy is a biology field that orgnizing individuals into a tree accroding to their classification position.
-from scipy.stats import entropy
+import scipy.stats
 import numpy as np
 from metric import Metric
 
@@ -67,7 +67,7 @@ class HSEMetric(Metric):
             total += len(c)
         for c in unique_clusters:
             pk.append(len(c)/total)
-        return entropy(pk)
+        return scipy.stats.entropy(pk, base=2)
 
     def get_metric(self):
         # integrate h from 0.0 to 1.0
@@ -89,6 +89,7 @@ class HSEMetric(Metric):
 if __name__ == "__main__":
     """Testing"""
     agents = np.random.random(size=[3,2]) # three agents, two classification dimensions
+    print(f"check: log_2(3) = {np.log2(3)}")
     h = HSEMetric(None)
     for i in range(11):
         ret = h.clustering(agents, i*0.1)
