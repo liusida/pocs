@@ -6,6 +6,7 @@ import numpy as np
 from p5 import *  # pip install p5
 import matplotlib.pyplot as plt
 import tqdm
+import pickle
 
 from policy import Policy
 from policy_simplified_boids import Policy_Simplified_Boids
@@ -58,8 +59,9 @@ class Simulation(threading.Thread):
     seed = 0
     def run(self):
         assert not self.save_history or self.max_steps > 0
-        global g_obs, g_world, g_metrics, g_metrics_val, metric_history
-        g_world = World(seed=0)
+        global g_obs, g_world, g_metrics, g_metrics_val, metric_history, obs_history
+
+        g_world = World(seed=self.seed)
         g_world.init_vehicles(args.num_vehicles)
 
         g_metrics = Metric_classes[args.metric_class](world=g_world) # , history_len=300)
@@ -70,9 +72,14 @@ class Simulation(threading.Thread):
         
         metric_history = dict()
 
+        if args.raw:
+            obs_history = np.zeros(shape=(self.max_steps, args.num_vehicles*4))
+
         for step_id in tqdm.tqdm(sequence(self.max_steps)):
+
             action = g_policy.get_action(obs)
             obs, info = g_world.step(action)
+
             ret = g_metrics.get_metric()
             assert isinstance(ret, dict)
             # save the metrics to the history
@@ -87,6 +94,8 @@ class Simulation(threading.Thread):
             if self.save_history:
                 for key, val in ret.items():
                     metric_history[key][step_id] = val
+            if args.raw:
+                obs_history[step_id] = obs[0,:] # first row only
 
             # set g_obs for visualization
             g_obs = g_world.get_absolute_obs()
@@ -172,6 +181,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--report", action="store_true")
 
+    parser.add_argument("--raw", action="store_true")
+
     args = parser.parse_args()
 
     if args.report:
@@ -206,6 +217,18 @@ if __name__ == "__main__":
         plt.show()
         plt.savefig("%s_%d_steps_%d.pdf"%(args.metric_class, args.steps, int(time.time())))
         plt.savefig("%s_%d_steps_%d.png"%(args.metric_class, args.steps, int(time.time())))
+
+    elif args.raw:
+        sim = Simulation()
+        sim.max_steps = args.steps
+        sim.seed = args.seed
+        sim.start()
+        sim.join()
+        filename = "{}_{}steps_{}seed.p".format(args.policy_class,args.steps,args.seed)
+        f = open(filename, 'wb')
+        pickle.dump(obs_history, f)
+        f.close()
+
     else:
         g_obs = None
         g_world = None
@@ -216,6 +239,7 @@ if __name__ == "__main__":
         print("Press Ctrl+C twice to quit...")
         # Start Simulation Thread
         sim = Simulation()
+        sim.seed=args.seed
         sim.start()
         if not args.blind:
             run()

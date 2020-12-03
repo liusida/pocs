@@ -25,11 +25,11 @@ class Policy_Random_Network(Policy):
         self.dim_obs = dim_obs
         self.dim_action = dim_action
         self.num_vehicles = None
-        if seed is None:
-            seed = int(time.time()) # generate a new system every time
-        self.seed = seed
-        np.random.seed(seed)
-        torch.manual_seed(seed)
+        # if seed is None:
+        #     seed = int(time.time()) # generate a new system every time
+        # self.seed = seed
+        # np.random.seed(seed)
+        # torch.manual_seed(seed)
         self.net = Net(dim_obs, dim_action, 16)
         # Path("data_random_network").mkdir(parents=True, exist_ok=True)
         # with open(f"data_random_network/{seed}.pickle", "wb") as f:

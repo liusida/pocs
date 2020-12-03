@@ -21,12 +21,12 @@ class Policy_Boids(Policy):
 
         self.neighborhood_dist = 0.1  # arbitrary
 
-        if seed is None:
-            self.seed = int(time.time())
-        else:
-            self.seed = seed
+        # if seed is None:
+        #     self.seed = int(time.time())
+        # else:
+        #     self.seed = seed
 
-        np.random.seed(self.seed)
+        # np.random.seed(self.seed)
 
     def get_action(self, obs):
         """

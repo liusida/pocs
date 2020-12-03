@@ -4,6 +4,7 @@ profiler
 *.pickle
 *.pdf
 *.png
+*.p
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

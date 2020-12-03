@@ -17,11 +17,11 @@ class Policy_Follow_Leader(Policy):
         self.dim_obs = dim_obs
         self.dim_action = dim_action
         self.num_vehicles = None
-        if seed is None:
-            self.seed = int(time.time())
-        else:
-            self.seed = seed
-        np.random.seed(seed)  # generate a new system every time
+        # if seed is None:
+        #     self.seed = int(time.time())
+        # else:
+        #     self.seed = seed
+        # np.random.seed(seed)  # generate a new system every time
 
     def relative_distance(self, x):
         if x>0.5:

@@ -8,11 +8,13 @@ class Vehicle:
         self.dim_action = 2  # steering, velocity_offset
 
     def reset(self):
-        r = (np.random.random([3])+1) * 0.5
+        # r = (np.random.random([3])+1) * 0.5 # this is between 0.5 and 1
+        r = (np.random.random([3]))
         self.pos_x = r[0]       # [0 ~ 1)
         self.pos_y = r[1]       # [0 ~ 1)
         self.angle = r[2] * 2 * np.pi              # [0 ~ 2 pi)
-        self.velocity = 0      # [0 ~ infty)
+        # self.velocity = 0      # [0 ~ infty)
+        self.velocity = np.random.random()* (0.1) # [0, 0.1)
 
     def step(self, action):
         """action = [steering, velocity]"""
