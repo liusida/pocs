@@ -3,7 +3,12 @@ import numbers
 import threading
 import argparse
 import numpy as np
-from p5 import *  # pip install p5
+try:
+    from p5 import *  # pip install p5
+except Exception as e:
+    print(str(e))
+    print("Failed to import p5")
+
 import matplotlib.pyplot as plt
 import tqdm
 import pickle
