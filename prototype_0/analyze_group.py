@@ -58,14 +58,16 @@ def process_data(fname, nbins):
     velocity_binned_data = binned_data[:,:,2]
     n_vehicles = velocity_binned_data.shape[1]
 
-    all_entropies = np.zeros(shape=((n_vehicles*(n_vehicles-1))//2, 6))
+    all_entropies = np.zeros(shape=((n_vehicles*(n_vehicles-1))//2, 7))
     row_id = 0
+    seed_id = int(fname[fname.find("steps_")+6:-6])
     for v_id_a in range(n_vehicles):
         x_series = velocity_binned_data[:, v_id_a]
         for v_id_b in range(v_id_a+1, n_vehicles):
             y_series = velocity_binned_data[:, v_id_b]
             row_dat = investigate(x_series, y_series)
-            all_entropies[row_id] = row_dat
+            all_entropies[row_id, 1:] = row_dat
+            all_entropies[row_id, :1] = seed_id
             row_id += 1
 
     return all_entropies, np.mean(all_entropies, axis=0)
@@ -83,8 +85,9 @@ def main(client, fnames, nbins):
     return merged_data
 
 
-policies = ["Policy", "Policy_Random"]
+policies = ["Policy", "Policy_Random", "Policy_Random_Network", "Policy_Random_Network2", "Policy_Follow_Leader", "Policy_Boids", "Policy_Simplified_Boids"]
 
+dfs = []
 for policy in policies:
     fnames = glob.glob("data/{}_10agents_10000steps*".format(policy))
 
@@ -94,9 +97,19 @@ for policy in policies:
     average_entropies = np.array([d[1] for d in dat])
     average_entropies.shape
 
-    df = pd.DataFrame(average_entropies, columns=["Hx", "Hy", "Hxy", "Hy_given_x", "Hx_given_y", "MI_xy"])
+    df = pd.DataFrame(average_entropies, columns=["Seed", "Hx", "Hy", "Hxy", "Hy_given_x", "Hx_given_y", "MI_xy"])
+    df.insert(0, "Policy", policy)
+    dfs.append(df)
+df = pd.concat(dfs)
 
-    ax = sns.barplot(data=df)
-    ax.set_title(policy)
-    ax.set_ylim((0, 13))
-    plt.show()
+ldf = pd.wide_to_long(df, stubnames=[""], i=["Policy", "Seed"], j="Metric", sep="", suffix='[HM]\w+')
+ldf.reset_index(inplace=True)
+ldf.rename(columns={"":"Value"}, inplace=True)
+
+fig, ax = plt.subplots(figsize=(4*7,4))
+sns.barplot(x="Policy", y="Value", hue="Metric",ci=95, data=ldf, ax=ax)
+plt.savefig("Entropies.pdf")
+plt.show()
+
+tips = sns.load_dataset("tips")
+tips
