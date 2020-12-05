@@ -229,7 +229,7 @@ if __name__ == "__main__":
         sim.seed = args.seed
         sim.start()
         sim.join()
-        filename = "{}_{}agents_{}steps_{}seed.p".format(args.policy_class, args.num_vehicles, args.steps, args.seed)
+        filename = "data/{}_{}agents_{}steps_{}seed.p".format(args.policy_class, args.num_vehicles, args.steps, args.seed)
         f = open(filename, 'wb')
         pickle.dump(obs_history, f)
         f.close()
