@@ -14,7 +14,7 @@ def r(n):
     return round(n, 3)
 
 
-def investigate(x, y, title=""):
+def investigate(x, y, title="", ax=None):
     """x and y are observations of X and Y"""
     assert x.shape == y.shape, "Can't do mutual information on observations of different length"
 
@@ -46,10 +46,13 @@ def investigate(x, y, title=""):
     # In short:
     print(f"pyin.mutual_info: {pyin.mutual_info(x,y)}")
 
-    venn2(subsets=(r(Hy_given_x), r(Hx_given_y), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1)
-    plt.title(f"{title}")
-    plt.savefig(f"investigate_{title}.png")
-    plt.close()
+    venn2(subsets=(r(Hy_given_x), r(Hx_given_y), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1, ax=ax)
+    if ax is None:
+        plt.title(f"{title}")
+        plt.savefig(f"investigate_{title}.png")
+        plt.close()
+    else:
+        ax.set_title(f"{title}")
     return {
         "H(X)": Hx,
         "H(Y)": Hy,
