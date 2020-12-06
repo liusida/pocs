@@ -43,7 +43,7 @@ def investigate(x, y):
     # I(X;Y)
     MI_xy = Hy - Hy_given_x
 
-    return (Hx, Hy, Hxy, Hy_given_x, Hx_given_y, MI_xy)
+    return (Hx, Hy, Hxy, Hy_given_x, Hx_given_y, MI_xy, MI_xy/min(Hx, Hy))
 
 
 def process_data_HSE(fname):
@@ -56,15 +56,15 @@ def process_data_HSE(fname):
     data = data.reshape((data.shape[0], -1, 4))
     n_steps_full = data.shape[0]
     
-    n_steps = 1000
+    n_steps = 100
     step_size = n_steps_full//n_steps
-    entropies = np.zeros(shape=(n_steps, 2))
+    entropies = np.zeros(shape=(n_steps, 3))
     entropies[:, 0] = seed_id
     h = HSEMetric(None)
     row_idx = 0
-    while row_idx < n_steps:
-        entropies[row_idx, 1] = h.get_metric_no_world(data[row_idx, :, :2])["HSE"]
-        row_idx += step_size
+    for row_idx in range(n_steps):
+        entropies[row_idx, 1] = row_idx*step_size
+        entropies[row_idx, 2] = h.get_metric_no_world(data[row_idx*step_size, :, :2])["HSE"]
     return  entropies
 
 
@@ -81,7 +81,7 @@ def process_data_MI(fname, nbins):
     velocity_binned_data = binned_data[:,:,2]
     n_vehicles = velocity_binned_data.shape[1]
 
-    all_entropies = np.zeros(shape=((n_vehicles*(n_vehicles-1))//2, 9))
+    all_entropies = np.zeros(shape=((n_vehicles*(n_vehicles-1))//2, 10))
     row_id = 0
     seed_id = int(fname[fname.find("steps_")+6:-6])
     for v_id_a in range(n_vehicles):
@@ -101,8 +101,8 @@ def main(client, fnames, nbins):
     for fname in fnames:
         results_MI.append(delayed(process_data_MI)(fname, nbins))
 
-    for fname in fnames:
-        results_HSE.append(delayed(process_data_HSE)(fname))
+    # for fname in fnames:
+    #     results_HSE.append(delayed(process_data_HSE)(fname))
     
     merged_data_MI = []
     for fut in client.compute(results_MI):
@@ -110,9 +110,9 @@ def main(client, fnames, nbins):
         merged_data_MI.append(res)
 
     merged_data_HSE = []
-    for fut in client.compute(results_HSE):
-        res = fut.result()
-        merged_data_HSE.append(res)
+    # for fut in client.compute(results_HSE):
+    #     res = fut.result()
+    #     merged_data_HSE.append(res)
 
     return merged_data_MI, merged_data_HSE
 
@@ -127,21 +127,28 @@ for policy in policies:
     dat_MI, dat_HSE = main(client, fnames, 10)
 
     stacked_entropies_MI = np.vstack([d[0] for d in dat_MI])
-    stacked_entropies_HSE = np.vstack( dat_HSE)
+    # stacked_entropies_HSE = np.vstack( dat_HSE)
 
-    dfMI = pd.DataFrame(stacked_entropies_MI, columns=["Seed", "Vehicle_A", "Vehicle_B", "Hx", "Hy", "Hxy", "Hy_given_x", "Hx_given_y", "MI_xy"])
-    dfHSE = pd.DataFrame(stacked_entropies_HSE, columns=["Seed", "HSE"])
+    dfMI = pd.DataFrame(stacked_entropies_MI, columns=["Seed", "Vehicle_A", "Vehicle_B", "Hx", "Hy", "Hxy", "Hy_given_x", "Hx_given_y", "MI_xy", "MI_xy_Normalized"])
+    # dfHSE = pd.DataFrame(stacked_entropies_HSE, columns=["Seed", "Time", "HSE"])
     dfMI.insert(0, "Policy", policy)
-    dfHSE.insert(0, "Policy", policy)
+    # dfHSE.insert(0, "Policy", policy)
     dfsMI.append(dfMI)
-    dfsHSE.append(dfHSE)
+    # dfsHSE.append(dfHSE)
 
 dfMI = pd.concat(dfsMI)
-dfHSE = pd.concat(dfsHSE)
+# dfHSE = pd.concat(dfsHSE)
 
 ldf = pd.wide_to_long(dfMI, stubnames=[""], i=["Policy", "Seed", "Vehicle_A", "Vehicle_B"], j="Metric", sep="", suffix='[HM]\w+')
 ldf.reset_index(inplace=True)
 ldf.rename(columns={"":"Value"}, inplace=True)
+
+ldfsub = ldf[ldf["Metric"] == "MI_xy_Normalized"]
+
+fig, ax = plt.subplots(figsize=(6,4))
+sns.barplot(y="Policy", x="Value", hue="Metric",ci=95, data=ldfsub, ax=ax)
+plt.savefig("Normalized_MI_Entropies.pdf", bbox_inches='tight')
+plt.show()
 
 fig, ax = plt.subplots(figsize=(4*7,4))
 sns.barplot(x="Policy", y="Value", hue="Metric",ci=95, data=ldf, ax=ax)
@@ -154,6 +161,11 @@ sns.barplot(y="Policy", x="HSE", ci=95, data=dfHSE, ax=ax)
 plt.savefig("HSE_Entropies.pdf")
 plt.show()
 
+dfHSETMP = dfHSE[dfHSE["Seed"] == 1]
 
-tips = sns.load_dataset("tips")
-tips
+fig, ax = plt.subplots(figsize=(12,4))
+sns.lineplot(x="Time", y="HSE", hue="Policy", data=
+                            dfHSETMP,
+                             ax=ax, ci="sd")
+plt.savefig("HSE_Entropies_Over_Time.pdf")
+plt.show()
