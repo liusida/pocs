@@ -86,6 +86,23 @@ class HSEMetric(Metric):
         # print(HSE)
         return {"HSE":HSE}
 
+    def get_metric_no_world(self, agents):
+        """
+        pos: N x 2 array (x, y) position for each row.
+        """
+        # integrate h from 0.0 to 1.0
+        HSE = 0
+        num_hs = 20 # discretize h
+        hs = np.linspace(0., 1., num=num_hs)
+        for h in hs:
+            clusters = self.clustering(agents, h)
+            # print(clusters)
+            entropy = self.social_entropy(clusters)
+            HSE += entropy
+        HSE /= num_hs
+        # print(HSE)
+        return {"HSE":HSE}
+        
 if __name__ == "__main__":
     """Testing"""
     agents = np.random.random(size=[3,2]) # three agents, two classification dimensions
