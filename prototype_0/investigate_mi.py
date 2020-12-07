@@ -66,8 +66,8 @@ def investigate(x, y, title="", ax=None, with_numbers=True):
         "H(X)": Hx,
         "H(Y)": Hy,
         "H(X,Y)": Hxy,
-        "H(Y|X)": Hy_given_x,
         "H(X|Y)": Hx_given_y,
+        "H(Y|X)": Hy_given_x,
         "I(X;Y)": MI_xy,
     }
 
