@@ -2,6 +2,7 @@
 # Using Sida's investigate_mi tool on raw data from our simulations 
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
 
 import sys
 
@@ -29,24 +30,29 @@ def get_states(series, state='all', bins=100):
     if state == 'velocity':
         return series_discrete[:,3]
 
-policy = sys.argv[1]
-# policy = 'Policy_'
-files = ['{}/{}_1000steps_0seed.p'.format(policy, policy), '{}/{}_10000steps_0seed.p'.format(policy, policy)]
-steps = [1000, 10000]
+policies = ['Policy', 'Policy_Random', 'Policy_Follow_Leader', 'Policy_Boids', 'Policy_Simplified_Boids', 'Policy_Random_Network', 'Policy_Random_Network2']
+files = []
+for p in policies:
+    files.append('{}/{}_10000steps_0seed.p'.format(p, p))
+steps = [10000]
+
+fig, ax = plt.subplots(len(policies),3, figsize=(10,15))
+
 for i,f in enumerate(files):
 
     data = load_data(f)
 
-    granularities = [10, 100, 1000]
-    states = ['x','y','angle','velocity', 'pos', 'angle_velocity']
-    # states = ['velocity']
+    # states = ['x','y','angle','velocity', 'pos', 'angle_velocity']
+    states = ['velocity']
 
     # no moving window - history length is the entire sim
     # comparing two vehicle timeseries only
 
     num_vehicles = int(data.shape[1]/4)
+    granularities = [10, 100, 1000]
 
-    for bins in granularities:
+    for j,bins in enumerate(granularities):
+        print(policies[i], ":", bins, "bins")
 
         for state in states:
             Hy_given_x = []
@@ -66,7 +72,7 @@ for i,f in enumerate(files):
                         v2_series = get_states(v2_ts, state=state, bins=bins)
 
                         # investigate(v1_series, v2_series, title='{}, {} steps, {} states, state={}, v1={}, v2={}'.format(policy, steps[i], bins, state, v1_id, v2_id))
-                        info = investigate(v1_series, v2_series)
+                        info = investigate(v1_series, v2_series, plot=False)
                         Hy_given_x.append(info["H(Y|X)"])
                         Hx_given_y.append(info["H(X|Y)"])
                         MI_xy.append(info["I(X;Y)"])
@@ -75,7 +81,22 @@ for i,f in enumerate(files):
             Hx_given_y_avg = np.mean(Hx_given_y)
             MI_xy_avg = np.mean(MI_xy)
 
-            title = "{}, {} steps, {} states, state={}, Average".format(policy, steps[i], bins, state)
-            plot_venn(Hy_given_x_avg, Hx_given_y_avg, MI_xy_avg, title)
+            # title = "{}, {} steps, {} states, state={}, Average".format(policy, steps[i], bins, state)
+
+            plot_venn(Hy_given_x_avg, Hx_given_y_avg, MI_xy_avg, ax=ax[i,j], with_numbers=False)
+
+cols = ["{} bins".format(g) for g in granularities]
+rows = ['Policy', 'Random', 'Follow Leader', 'Boids', 'Simplified Boids', 'Random Network', 'Random Network 2']
+
+for a, col in zip(ax[0], cols):
+    a.set_title(col)
+
+for a, row in zip(ax[:,0], rows):
+    # a.set_ylabel(row, rotation=0, size='large')
+    a.set_ylabel(row)
+
+fig.tight_layout()
+plt.savefig('velocity_10ksteps_without_numbers.png', dpi=300)
+
 
 
