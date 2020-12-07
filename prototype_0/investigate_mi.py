@@ -71,3 +71,8 @@ def investigate(x, y, title="", ax=None, with_numbers=True):
         "I(X;Y)": MI_xy,
     }
 
+def plot_venn(Hy_given_x, Hx_given_y, MI_xy, title):
+    venn2(subsets=(r(Hy_given_x), r(Hx_given_y), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1)
+    plt.title(f"{title}")
+    plt.savefig(f"investigate_{title}.png")
+    plt.close()

@@ -3,7 +3,12 @@ import numbers
 import threading
 import argparse
 import numpy as np
-from p5 import *  # pip install p5
+try:
+    from p5 import *  # pip install p5
+except Exception as e:
+    print(str(e))
+    print("Failed to import p5")
+
 import matplotlib.pyplot as plt
 import tqdm
 import pickle
@@ -224,7 +229,7 @@ if __name__ == "__main__":
         sim.seed = args.seed
         sim.start()
         sim.join()
-        filename = "{}_{}steps_{}seed.p".format(args.policy_class,args.steps,args.seed)
+        filename = "data/{}_{}agents_{}steps_{}seed.p".format(args.policy_class, args.num_vehicles, args.steps, args.seed)
         f = open(filename, 'wb')
         pickle.dump(obs_history, f)
         f.close()
