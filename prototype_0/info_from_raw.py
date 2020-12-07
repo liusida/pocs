@@ -3,7 +3,9 @@
 import numpy as np
 import pickle
 
-from investigate_mi import investigate
+import sys
+
+from investigate_mi import investigate, plot_venn
 
 def load_data(fn):
     with open(fn,'rb') as f:
@@ -13,13 +15,11 @@ def load_data(fn):
 def get_states(series, state='all', bins=100):
     series_discrete = (series * bins).astype(np.int)
     if state=='all':
-        # ???
-        vals, counts = np.unique(series_discrete, return_counts=True, axis=0) 
-        return counts
+        return series_discrete
     if state == 'pos': #x,y
-        # ???
-        vals, counts = np.unique(series_discrete[:,:2], return_counts=True, axis=0) 
-        return counts
+        return series_discrete[:,:2]
+    if state == 'angle_velocity':
+        return series_discrete[:,2:]
     if state == 'x':
         return series_discrete[:,0]
     if state == 'y':
@@ -29,36 +29,53 @@ def get_states(series, state='all', bins=100):
     if state == 'velocity':
         return series_discrete[:,3]
 
-
-# files = ['Policy_Random_100steps_0seed.p', 'Policy_Random_1000steps_0seed.p', 'Policy_Random_10000steps_0seed.p']
-files = ['Policy_Follow_Leader_10000steps_0seed.p']
-policy = 'Policy_Follow_Leader'
-steps = [10000]
+policy = sys.argv[1]
+# policy = 'Policy_'
+files = ['{}/{}_1000steps_0seed.p'.format(policy, policy), '{}/{}_10000steps_0seed.p'.format(policy, policy)]
+steps = [1000, 10000]
 for i,f in enumerate(files):
 
     data = load_data(f)
 
-    bins=10
-    # states = ['x','y','angle','velocity']
-    states = ['velocity']
+    granularities = [10, 100, 1000]
+    states = ['x','y','angle','velocity', 'pos', 'angle_velocity']
+    # states = ['velocity']
 
     # no moving window - history length is the entire sim
     # comparing two vehicle timeseries only
 
-    v1_id = 1
-    v2_id = 2
+    num_vehicles = int(data.shape[1]/4)
 
-    # time series including all states
-    v1_ts = data[:,v1_id*4:v1_id*4+4]
+    for bins in granularities:
 
-    v2_ts = data[:,v2_id*4:v2_id*4+4]
+        for state in states:
+            Hy_given_x = []
+            Hx_given_y = []
+            MI_xy = []
+            for v1_id in range(num_vehicles):
 
-    for state in states:
-        v1_series = get_states(v1_ts, state=state, bins=bins)
-        v2_series = get_states(v2_ts, state=state, bins=bins)
+                for v2_id in range(num_vehicles):
 
-        investigate(v1_series, v2_series, title='{}, {} steps, {} states, state={}'.format(policy, steps[i], bins, state))
+                    if v1_id != v2_id:
+                        # time series including all states
+                        v1_ts = data[:,v1_id*4:v1_id*4+4]
 
+                        v2_ts = data[:,v2_id*4:v2_id*4+4]
 
+                        v1_series = get_states(v1_ts, state=state, bins=bins)
+                        v2_series = get_states(v2_ts, state=state, bins=bins)
+
+                        # investigate(v1_series, v2_series, title='{}, {} steps, {} states, state={}, v1={}, v2={}'.format(policy, steps[i], bins, state, v1_id, v2_id))
+                        info = investigate(v1_series, v2_series)
+                        Hy_given_x.append(info["H(Y|X)"])
+                        Hx_given_y.append(info["H(X|Y)"])
+                        MI_xy.append(info["I(X;Y)"])
+            
+            Hy_given_x_avg = np.mean(Hy_given_x)
+            Hx_given_y_avg = np.mean(Hx_given_y)
+            MI_xy_avg = np.mean(MI_xy)
+
+            title = "{}, {} steps, {} states, state={}, Average".format(policy, steps[i], bins, state)
+            plot_venn(Hy_given_x_avg, Hx_given_y_avg, MI_xy_avg, title)
 
 
