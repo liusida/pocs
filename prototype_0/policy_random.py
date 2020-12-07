@@ -22,6 +22,6 @@ class Policy_Random:
         action[:,0] = np.random.random(action[:,0].shape) * 2 * np.pi
 
         # random velocity
-        action[:,1] = np.random.random(action[:,1].shape)
+        action[:,1] = np.random.random(action[:,1].shape) * 0.2
 
         return action
