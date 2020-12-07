@@ -49,13 +49,13 @@ def investigate(x, y, title="", ax=None, with_numbers=True):
     print(f"H(X): {Hx}")
     print(f"H(Y): {Hy}")
     print(f"H(X,Y): {Hxy}")
-    print(f"H(Y|X): {Hy_given_x}")
     print(f"H(X|Y): {Hx_given_y}")
+    print(f"H(Y|X): {Hy_given_x}")
     print(f"I(X;Y): {MI_xy}")
     # In short:
-    print(f"pyin.mutual_info: {pyin.mutual_info(x,y)}")
+    # print(f"pyin.mutual_info: {pyin.mutual_info(x,y)}")
 
-    venn2(subsets=(r(Hy_given_x), r(Hx_given_y), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1, ax=ax, subset_label_formatter=_formatter)
+    venn2(subsets=(r(Hx_given_y), r(Hy_given_x), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1, ax=ax, subset_label_formatter=_formatter)
     if ax is None:
         plt.title(f"{title}")
         plt.savefig(f"investigate_{title}.png")
