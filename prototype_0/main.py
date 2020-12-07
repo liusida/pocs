@@ -217,11 +217,12 @@ if __name__ == "__main__":
                     ax.plot(metric_history[key][:], label=f"{p} ({key})", linestyle=line_styles[metric_idx], c="C%d"%(policy_idx), linewidth=3)
                 # key = "Micro - Macro Entropy"
                 # plt.plot(metric_history[key][:], label=f"{p} {key}")
-        ax.legend()
+        # ax.legend()
+        lgd = ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         # ax.set_ylim((0,1))
-        plt.show()
-        plt.savefig("%s_%d_steps_%d.pdf"%(args.metric_class, args.steps, int(time.time())))
-        plt.savefig("%s_%d_steps_%d.png"%(args.metric_class, args.steps, int(time.time())))
+        # plt.show()
+        plt.savefig("%s_%d_steps_%d.pdf"%(args.metric_class, args.steps, int(time.time())), bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=300)
+        plt.savefig("%s_%d_steps_%d.png"%(args.metric_class, args.steps, int(time.time())), bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=300)
 
     elif args.raw:
         sim = Simulation()

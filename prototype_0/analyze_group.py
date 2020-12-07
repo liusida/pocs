@@ -101,8 +101,8 @@ def main(client, fnames, nbins):
     for fname in fnames:
         results_MI.append(delayed(process_data_MI)(fname, nbins))
 
-    # for fname in fnames:
-    #     results_HSE.append(delayed(process_data_HSE)(fname))
+    for fname in fnames:
+        results_HSE.append(delayed(process_data_HSE)(fname))
     
     merged_data_MI = []
     for fut in client.compute(results_MI):
@@ -110,9 +110,9 @@ def main(client, fnames, nbins):
         merged_data_MI.append(res)
 
     merged_data_HSE = []
-    # for fut in client.compute(results_HSE):
-    #     res = fut.result()
-    #     merged_data_HSE.append(res)
+    for fut in client.compute(results_HSE):
+        res = fut.result()
+        merged_data_HSE.append(res)
 
     return merged_data_MI, merged_data_HSE
 
@@ -127,17 +127,17 @@ for policy in policies:
     dat_MI, dat_HSE = main(client, fnames, 10)
 
     stacked_entropies_MI = np.vstack([d[0] for d in dat_MI])
-    # stacked_entropies_HSE = np.vstack( dat_HSE)
+    stacked_entropies_HSE = np.vstack( dat_HSE)
 
     dfMI = pd.DataFrame(stacked_entropies_MI, columns=["Seed", "Vehicle_A", "Vehicle_B", "Hx", "Hy", "Hxy", "Hy_given_x", "Hx_given_y", "MI_xy", "MI_xy_Normalized"])
-    # dfHSE = pd.DataFrame(stacked_entropies_HSE, columns=["Seed", "Time", "HSE"])
+    dfHSE = pd.DataFrame(stacked_entropies_HSE, columns=["Seed", "Time", "HSE"])
     dfMI.insert(0, "Policy", policy)
-    # dfHSE.insert(0, "Policy", policy)
+    dfHSE.insert(0, "Policy", policy)
     dfsMI.append(dfMI)
-    # dfsHSE.append(dfHSE)
+    dfsHSE.append(dfHSE)
 
 dfMI = pd.concat(dfsMI)
-# dfHSE = pd.concat(dfsHSE)
+dfHSE = pd.concat(dfsHSE)
 
 ldf = pd.wide_to_long(dfMI, stubnames=[""], i=["Policy", "Seed", "Vehicle_A", "Vehicle_B"], j="Metric", sep="", suffix='[HM]\w+')
 ldf.reset_index(inplace=True)
@@ -162,10 +162,50 @@ plt.savefig("HSE_Entropies.pdf")
 plt.show()
 
 dfHSETMP = dfHSE[dfHSE["Seed"] == 1]
-
-fig, ax = plt.subplots(figsize=(12,4))
+fig, ax = plt.subplots(figsize=(6,4))
 sns.lineplot(x="Time", y="HSE", hue="Policy", data=
                             dfHSETMP,
                              ax=ax, ci="sd")
-plt.savefig("HSE_Entropies_Over_Time.pdf")
+box = ax.get_position()
+ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                 box.width, box.height * 0.9])
+
+# Put a legend below current axis
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+           ncol=2)
+plt.savefig("HSE_Entropies_Over_Time_Seed_1.pdf", bbox_inches='tight')
 plt.show()
+
+dfHSETMP = dfHSE[dfHSE["Seed"] == 2]
+fig, ax = plt.subplots(figsize=(6,4))
+sns.lineplot(x="Time", y="HSE", hue="Policy", data=
+                            dfHSETMP,
+                             ax=ax, ci="sd")
+box = ax.get_position()
+ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                 box.width, box.height * 0.9])
+
+# Put a legend below current axis
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+           ncol=2)
+plt.savefig("HSE_Entropies_Over_Time_Seed_2.pdf",bbox_inches='tight')
+plt.show()
+
+dfHSETMP = dfHSE[dfHSE["Seed"]==1]
+min_row = dfHSETMP.values[dfHSETMP["HSE"].argmin()]
+data = pickle.load(open("data/{}_10agents_10000steps_1seed.p".format(min_row[0]), "rb"))
+data = data.reshape((data.shape[0], -1, 4))
+min_row_pos = data[int(min_row[2]), :, :2]
+plt.scatter(min_row_pos[:, 0], min_row_pos[:, 1], label="HSE: {:.2f}".format(min_row[-1]))
+
+max_row = dfHSETMP.values[dfHSETMP["HSE"].argmax()]
+data = pickle.load(open("data/{}_10agents_10000steps_1seed.p".format(max_row[0]), "rb"))
+data = data.reshape((data.shape[0], -1, 4))
+max_row_pos = data[int(max_row[2]), :, :2]
+
+plt.scatter(max_row_pos[:, 0], max_row_pos[:, 1], label="HSE: {:.2f}".format(max_row[-1]))
+
+plt.xlim((0,1))
+plt.ylim((0,1))
+plt.legend()
+plt.savefig("HSE_Entropies_Min_Max_Seed_1.pdf",bbox_inches='tight')
