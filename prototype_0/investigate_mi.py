@@ -13,10 +13,19 @@ def r(n):
     """venn2 can't show specified values, so round the values instead"""
     return round(n, 3)
 
+def formatter(n):
+    """formatter for venn diagram, so it can be easily turned off."""
+    #if you want it to be there
+    return f"{n:.02f}"
+def formatter_null(n):
+    """don't want any numbers on the venn diagram"""
+    return ""
 
-def investigate(x, y, title=""):
+def investigate(x, y, title="", ax=None, with_numbers=True):
     """x and y are observations of X and Y"""
     assert x.shape == y.shape, "Can't do mutual information on observations of different length"
+
+    _formatter = formatter if with_numbers else formatter_null
 
     xy = np.c_[x, y]  # a faster way of doing xy = zip(x,y) and turn to array
 
@@ -46,10 +55,13 @@ def investigate(x, y, title=""):
     # In short:
     print(f"pyin.mutual_info: {pyin.mutual_info(x,y)}")
 
-    venn2(subsets=(r(Hy_given_x), r(Hx_given_y), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1)
-    plt.title(f"{title}")
-    plt.savefig(f"investigate_{title}.png")
-    plt.close()
+    venn2(subsets=(r(Hy_given_x), r(Hx_given_y), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1, ax=ax, subset_label_formatter=_formatter)
+    if ax is None:
+        plt.title(f"{title}")
+        plt.savefig(f"investigate_{title}.png")
+        plt.close()
+    else:
+        ax.set_title(f"{title}")
     return {
         "H(X)": Hx,
         "H(Y)": Hy,
