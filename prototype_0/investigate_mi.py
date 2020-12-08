@@ -21,7 +21,7 @@ def formatter_null(n):
     """don't want any numbers on the venn diagram"""
     return ""
 
-def investigate(x, y, title="", ax=None, with_numbers=True):
+def investigate(x, y, title="", ax=None, with_numbers=True, plot=True):
     """x and y are observations of X and Y"""
     assert x.shape == y.shape, "Can't do mutual information on observations of different length"
 
@@ -46,22 +46,23 @@ def investigate(x, y, title="", ax=None, with_numbers=True):
     # I(X;Y)
     MI_xy = Hy - Hy_given_x
 
-    print(f"H(X): {Hx}")
-    print(f"H(Y): {Hy}")
-    print(f"H(X,Y): {Hxy}")
-    print(f"H(X|Y): {Hx_given_y}")
-    print(f"H(Y|X): {Hy_given_x}")
-    print(f"I(X;Y): {MI_xy}")
+    # print(f"H(X): {Hx}")
+    # print(f"H(Y): {Hy}")
+    # print(f"H(X,Y): {Hxy}")
+    # print(f"H(X|Y): {Hx_given_y}")
+    # print(f"H(Y|X): {Hy_given_x}")
+    # print(f"I(X;Y): {MI_xy}")
     # In short:
     # print(f"pyin.mutual_info: {pyin.mutual_info(x,y)}")
 
-    venn2(subsets=(r(Hx_given_y), r(Hy_given_x), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1, ax=ax, subset_label_formatter=_formatter)
-    if ax is None:
-        plt.title(f"{title}")
-        plt.savefig(f"investigate_{title}.png")
-        plt.close()
-    else:
-        ax.set_title(f"{title}")
+    if plot:
+        venn2(subsets=(r(Hx_given_y), r(Hy_given_x), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1, ax=ax, subset_label_formatter=_formatter)
+        if ax is None:
+            plt.title(f"{title}")
+            plt.savefig(f"investigate_{title}.png")
+            plt.close()
+        else:
+            ax.set_title(f"{title}")
     return {
         "H(X)": Hx,
         "H(Y)": Hy,
@@ -71,8 +72,12 @@ def investigate(x, y, title="", ax=None, with_numbers=True):
         "I(X;Y)": MI_xy,
     }
 
-def plot_venn(Hy_given_x, Hx_given_y, MI_xy, title):
-    venn2(subsets=(r(Hy_given_x), r(Hx_given_y), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1)
-    plt.title(f"{title}")
-    plt.savefig(f"investigate_{title}.png")
-    plt.close()
+def plot_venn(Hy_given_x, Hx_given_y, MI_xy, title="",  ax=None, with_numbers=True):
+    _formatter = formatter if with_numbers else formatter_null
+    venn2(subsets=(r(Hx_given_y), r(Hy_given_x), r(MI_xy)), set_labels=("H(X)", "H(Y)", "I(X;Y)"), normalize_to=1, ax=ax,subset_label_formatter=_formatter)
+    if ax is None:
+        plt.title(f"{title}")
+        plt.savefig(f"investigate_{title}.png")
+        plt.close()
+    else:
+        ax.set_title(f"{title}")
